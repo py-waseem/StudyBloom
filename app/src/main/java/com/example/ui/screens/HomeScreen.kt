@@ -99,7 +99,8 @@ fun HomeScreen(
     onOpenWizard: () -> Unit,
     onOpenAssistant: () -> Unit,
     onOpenFocusTimer: () -> Unit,
-    onExportPdf: () -> Unit
+    onExportPdf: () -> Unit,
+    onOpenAccountReminder: () -> Unit = {}
 ) {
     val totalPlannedMinutes = todayTasks.sumOf { it.durationMinutes }
     val completedTasks = todayTasks.filter { it.isCompleted }
@@ -143,13 +144,35 @@ fun HomeScreen(
                             .size(36.dp)
                             .clip(RoundedCornerShape(10.dp))
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Image(
                         painter = painterResource(id = R.drawable.ic_studybloom_wordmark),
                         contentDescription = "StudyBloom Logo",
-                        modifier = Modifier.height(30.dp)
+                        modifier = Modifier.height(28.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
+
+                    // Small, non-intrusive Guest Account indicator
+                    if (userProfile.isGuest) {
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f))
+                                .clickable { onOpenAccountReminder() }
+                                .padding(horizontal = 7.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = "👤", fontSize = 11.sp)
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "Guest Account",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
 
                     // Connection Status Pill (Online / Offline / Syncing)
                     ConnectionStatusPill(
@@ -158,20 +181,20 @@ fun HomeScreen(
                         onClick = onOpenConnectionDetails
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     // Consistency Streak Pill
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(SoftPinkLight)
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
+                            .padding(horizontal = 9.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "🔥", fontSize = 13.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "🔥", fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = "${userProfile.currentStreakDays}d streak",
+                            text = "${userProfile.currentStreakDays}d",
                             color = SoftPink,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp

@@ -57,4 +57,10 @@ interface StudyTaskDao {
 
     @Query("DELETE FROM study_tasks WHERE date = :date")
     suspend fun deleteTasksForDate(date: String)
+
+    @Query("SELECT COUNT(*) FROM study_tasks")
+    suspend fun getTasksCount(): Int
+
+    @Query("SELECT * FROM study_tasks")
+    suspend fun getAllTasksOnce(): List<StudyTaskEntity>
 }

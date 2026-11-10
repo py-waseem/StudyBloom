@@ -60,6 +60,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.CheckCircle
 import com.example.data.local.entity.UserProfileEntity
 import com.example.data.sync.SyncState
 import com.example.ui.components.BloomCard
@@ -72,6 +74,9 @@ import com.example.ui.theme.PastelBlue
 import com.example.ui.theme.PastelBlueLight
 import com.example.ui.theme.SoftPinkLight
 import com.example.util.NetworkState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ProfileScreen(
@@ -80,6 +85,8 @@ fun ProfileScreen(
     syncState: SyncState = SyncState(),
     onSyncNow: () -> Unit = {},
     onOpenConnectionDetails: () -> Unit = {},
+    onOpenAuth: (isRegister: Boolean) -> Unit = {},
+    onSignOut: () -> Unit = {},
     onSaveProfile: (UserProfileEntity) -> Unit,
     onTestNotification: () -> Unit
 ) {
@@ -165,6 +172,272 @@ fun ProfileScreen(
                     Icon(imageVector = Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = "Save", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // Section: Account Status & Cloud Backup
+        item {
+            SectionHeader(title = "Account Status & Cloud Backup")
+        }
+
+        item {
+            if (userProfile.isGuest) {
+                BloomCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    borderColor = LavenderPrimary.copy(alpha = 0.5f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(LavenderLight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "👤", fontSize = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Guest Account",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(SoftPinkLight)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "Device-Only",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Data stored on this device • Room SQLite",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "☁️ Cloud backup unavailable until registration",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        // Data Loss Warning Callout
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.35f)),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(text = "⚠️", fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Uninstalling StudyBloom or clearing application storage will permanently erase your local schedules, uploaded materials, and clock timer statistics.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+
+                        Button(
+                            onClick = { onOpenAuth(true) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .testTag("profile_create_account_button"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = LavenderPrimary)
+                        ) {
+                            Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Create Free Account & Protect Data 🌱", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                        }
+
+                        TextButton(
+                            onClick = { onOpenAuth(false) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("profile_sign_in_button")
+                        ) {
+                            Text(text = "Already have an account? Sign In", fontSize = 12.sp, color = LavenderPrimary)
+                        }
+                    }
+                }
+            } else {
+                // Registered User Account Details
+                BloomCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    borderColor = MintGreen.copy(alpha = 0.4f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(MintGreenLight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MintGreen,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = userProfile.accountName.ifBlank { userProfile.name },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = userProfile.accountEmail,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(MintGreenLight)
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    ) {
+                                        Text(text = "Verified ✓", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = MintGreen)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Backup & Sync Status rows
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(MintGreen)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Cloud backup enabled",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                val lastBackupFormatted = if (userProfile.lastCloudSyncTimestamp > 0) {
+                                    SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(Date(userProfile.lastCloudSyncTimestamp))
+                                } else {
+                                    syncState.lastSyncFormatted
+                                }
+                                Text(
+                                    text = "Last backup: $lastBackupFormatted",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            val syncText = when {
+                                syncState.isSyncing -> "Syncing..."
+                                networkState.isConnected -> "Synced ✓"
+                                else -> "Offline"
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (networkState.isConnected) MintGreenLight else LavenderLight)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = syncText,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (networkState.isConnected) MintGreen else LavenderPrimary
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onSyncNow,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Icon(imageVector = Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(text = "Sync Now", fontSize = 12.sp)
+                            }
+
+                            TextButton(
+                                onClick = onSignOut,
+                                modifier = Modifier.testTag("profile_sign_out_button")
+                            ) {
+                                Text(text = "Sign Out", fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    }
                 }
             }
         }

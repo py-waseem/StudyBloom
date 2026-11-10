@@ -25,5 +25,14 @@ data class UserProfileEntity(
     val themeMode: String = "SYSTEM", // "SYSTEM", "LIGHT", "DARK"
     val hasCompletedOnboarding: Boolean = false,
     val currentStreakDays: Int = 1,
-    val lastActiveDate: String = ""
+    val lastActiveDate: String = "",
+    // Guest & Account Authentication
+    val isGuest: Boolean = true,
+    val accountEmail: String = "",
+    val accountName: String = "",
+    val isEmailVerified: Boolean = false,
+    val isCloudBackupEnabled: Boolean = false,
+    val lastCloudSyncTimestamp: Long = 0L,
+    val hasSeenAccountReminder: Boolean = false,
+    val completedSessionsCount: Int = 0
 )

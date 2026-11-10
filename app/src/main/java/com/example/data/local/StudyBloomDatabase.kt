@@ -36,7 +36,7 @@ import java.util.Locale
         AvailabilitySlotEntity::class,
         PendingAiRequestEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class StudyBloomDatabase : RoomDatabase() {
@@ -84,7 +84,7 @@ abstract class StudyBloomDatabase : RoomDatabase() {
                 val topicDao = db.topicDao()
                 val taskDao = db.studyTaskDao()
 
-                // Default Profile
+                // Default Profile - starts in welcoming onboarding flow as Guest
                 profileDao.insertProfile(
                     UserProfileEntity(
                         id = 1,
@@ -98,9 +98,17 @@ abstract class StudyBloomDatabase : RoomDatabase() {
                         preferredBreakDurationMinutes = 15,
                         dailyGoalMinutes = 180,
                         timeZone = "Asia/Kathmandu",
-                        hasCompletedOnboarding = true,
-                        currentStreakDays = 3,
-                        lastActiveDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                        hasCompletedOnboarding = false,
+                        currentStreakDays = 1,
+                        lastActiveDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                        isGuest = true,
+                        accountEmail = "",
+                        accountName = "",
+                        isEmailVerified = false,
+                        isCloudBackupEnabled = false,
+                        lastCloudSyncTimestamp = 0L,
+                        hasSeenAccountReminder = false,
+                        completedSessionsCount = 1
                     )
                 )
 

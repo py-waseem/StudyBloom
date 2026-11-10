@@ -27,4 +27,10 @@ interface LearningMaterialDao {
 
     @Query("DELETE FROM learning_materials WHERE id = :id")
     suspend fun deleteMaterialById(id: Long)
+
+    @Query("SELECT COUNT(*) FROM learning_materials")
+    suspend fun getMaterialsCount(): Int
+
+    @Query("SELECT * FROM learning_materials")
+    suspend fun getAllMaterialsOnce(): List<LearningMaterialEntity>
 }

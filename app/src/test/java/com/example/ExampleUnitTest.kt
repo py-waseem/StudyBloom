@@ -134,4 +134,79 @@ class ExampleUnitTest {
         assertEquals(42L, snapshot.taskId)
         assertEquals(15000L, snapshot.actualFocusedMillis)
     }
+
+    @Test
+    fun guest_mode_profile_defaults_and_cloud_backup_disabled() {
+        val guestProfile = com.example.data.local.entity.UserProfileEntity(
+            isGuest = true,
+            accountEmail = "",
+            isCloudBackupEnabled = false,
+            hasSeenAccountReminder = false
+        )
+        assertTrue(guestProfile.isGuest)
+        assertEquals("", guestProfile.accountEmail)
+        assertEquals(false, guestProfile.isCloudBackupEnabled)
+        assertEquals(false, guestProfile.hasSeenAccountReminder)
+    }
+
+    @Test
+    fun registered_profile_reflects_cloud_backup_enabled() {
+        val regProfile = com.example.data.local.entity.UserProfileEntity(
+            isGuest = false,
+            accountEmail = "maya@studybloom.app",
+            accountName = "Maya",
+            isEmailVerified = true,
+            isCloudBackupEnabled = true,
+            lastCloudSyncTimestamp = 1700000000000L
+        )
+        assertEquals(false, regProfile.isGuest)
+        assertEquals("maya@studybloom.app", regProfile.accountEmail)
+        assertTrue(regProfile.isEmailVerified)
+        assertTrue(regProfile.isCloudBackupEnabled)
+        assertTrue(regProfile.lastCloudSyncTimestamp > 0L)
+    }
+
+    @Test
+    fun local_data_counts_verification_preserves_counts_correctly() {
+        val counts = com.example.data.repository.LocalDataCounts(
+            tasksCount = 12,
+            sessionsCount = 5,
+            materialsCount = 2,
+            topicsCount = 8
+        )
+        assertEquals(12, counts.tasksCount)
+        assertEquals(5, counts.sessionsCount)
+        assertEquals(2, counts.materialsCount)
+        assertEquals(8, counts.topicsCount)
+    }
+
+    @Test
+    fun migration_state_lifecycle_transitions_through_verification_steps() {
+        var state = com.example.data.auth.MigrationState(
+            step = com.example.data.auth.MigrationStep.CONFIRMING_LOCAL_DATA,
+            stepIndex = 1,
+            progressPercent = 0.20f,
+            statusMessage = "1/5: Scanning & preserving local study data..."
+        )
+        assertEquals(com.example.data.auth.MigrationStep.CONFIRMING_LOCAL_DATA, state.step)
+        assertEquals(1, state.stepIndex)
+
+        state = state.copy(
+            step = com.example.data.auth.MigrationStep.VERIFYING_PARITY,
+            stepIndex = 4,
+            progressPercent = 0.85f,
+            statusMessage = "4/5: Verifying cloud record parity..."
+        )
+        assertEquals(com.example.data.auth.MigrationStep.VERIFYING_PARITY, state.step)
+        assertEquals(4, state.stepIndex)
+
+        state = state.copy(
+            step = com.example.data.auth.MigrationStep.COMPLETED,
+            stepIndex = 5,
+            progressPercent = 1.0f,
+            statusMessage = "5/5: Account successfully created & cloud backup active! 🌸"
+        )
+        assertEquals(com.example.data.auth.MigrationStep.COMPLETED, state.step)
+        assertEquals(1.0f, state.progressPercent, 0.001f)
+    }
 }

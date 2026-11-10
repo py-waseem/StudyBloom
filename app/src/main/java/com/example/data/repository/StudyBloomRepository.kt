@@ -17,6 +17,13 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+data class LocalDataCounts(
+    val tasksCount: Int = 0,
+    val sessionsCount: Int = 0,
+    val materialsCount: Int = 0,
+    val topicsCount: Int = 0
+)
+
 class StudyBloomRepository(
     private val database: StudyBloomDatabase,
     private val aiRepository: AiRepository
@@ -275,7 +282,28 @@ class StudyBloomRepository(
                     sessionType = "TASK_CLOCK"
                 )
             )
+
+            val currentProfile = getProfileOnce()
+            userProfileDao.insertProfile(
+                currentProfile.copy(
+                    completedSessionsCount = currentProfile.completedSessionsCount + 1
+                )
+            )
         }
+    }
+
+    suspend fun getLocalDataSummary(): LocalDataCounts {
+        return LocalDataCounts(
+            tasksCount = taskDao.getTasksCount(),
+            sessionsCount = sessionDao.getSessionsCount(),
+            materialsCount = materialDao.getMaterialsCount(),
+            topicsCount = topicDao.getTopicsCount()
+        )
+    }
+
+    suspend fun markAccountReminderSeen() {
+        val currentProfile = getProfileOnce()
+        userProfileDao.insertProfile(currentProfile.copy(hasSeenAccountReminder = true))
     }
 
     // --- Smart Rescheduling ---

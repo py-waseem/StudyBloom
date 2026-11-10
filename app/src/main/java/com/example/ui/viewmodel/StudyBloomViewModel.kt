@@ -71,10 +71,20 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     val pendingAiRequests: StateFlow<List<PendingAiRequestEntity>>
 
+    // Guest Mode & Account Migration
+    val authManager: com.example.data.auth.AuthManager
+    val migrationState: StateFlow<com.example.data.auth.MigrationState>
+
+    private val _showAccountReminderDialog = MutableStateFlow(false)
+    val showAccountReminderDialog: StateFlow<Boolean> = _showAccountReminderDialog.asStateFlow()
+
     init {
         val database = StudyBloomDatabase.getInstance(application)
         val aiRepo = AiRepositoryImpl()
         repository = StudyBloomRepository(database, aiRepo)
+        authManager = com.example.data.auth.AuthManager(application, repository)
+        migrationState = authManager.migrationState
+
         syncManager = SyncManager(application, repository, aiRepo, networkMonitor)
         syncState = syncManager.syncState
         pendingAiRequests = repository.pendingAiRequests
@@ -435,6 +445,13 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 markTaskAsCompleted = true
             )
             _userMessage.value = "Task '${result.taskTitle}' finished! Logged ${result.actualDurationMinutes}m focused study. 🌸"
+
+            // Smart Account Reminder: Gently offer account creation to guest after completing study session
+            val profile = repository.getProfileOnce()
+            if (profile.isGuest && !profile.hasSeenAccountReminder) {
+                delay(1000)
+                _showAccountReminderDialog.value = true
+            }
         }
     }
 
@@ -700,5 +717,58 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
         val h = (minutes / 60) % 24
         val m = minutes % 60
         return String.format(Locale.US, "%02d:%02d", h, m)
+    }
+
+    // --- Authentication & Account Creation Actions ---
+
+    fun openAccountReminder() {
+        _showAccountReminderDialog.value = true
+    }
+
+    fun dismissAccountReminder() {
+        _showAccountReminderDialog.value = false
+        viewModelScope.launch {
+            repository.markAccountReminderSeen()
+        }
+    }
+
+    fun createAccount(name: String, email: String, pass: String) {
+        viewModelScope.launch {
+            val result = authManager.createAccountAndMigrate(
+                name = name,
+                email = email,
+                password = pass,
+                isNetworkConnected = networkState.value.isConnected
+            )
+            if (result.isSuccess) {
+                _userMessage.value = "Account created & cloud backup enabled! 🌸"
+                _showAccountReminderDialog.value = false
+            }
+        }
+    }
+
+    fun signIn(email: String, pass: String) {
+        viewModelScope.launch {
+            val result = authManager.signIn(
+                email = email,
+                password = pass,
+                isNetworkConnected = networkState.value.isConnected
+            )
+            if (result.isSuccess) {
+                _userMessage.value = "Signed in! Cloud backup synced. 🌸"
+                _showAccountReminderDialog.value = false
+            }
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            authManager.signOut()
+            _userMessage.value = "Switched to Guest mode. Data is stored on this device."
+        }
+    }
+
+    fun resetAuthMigrationState() {
+        authManager.resetState()
     }
 }

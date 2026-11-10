@@ -40,9 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.local.entity.UserProfileEntity
+import com.example.ui.components.AccountCreationReminderDialog
 import com.example.ui.components.ActiveTimerPill
 import com.example.ui.components.AddTaskDialog
 import com.example.ui.components.AiAssistantSheet
+import com.example.ui.components.AuthDialog
 import com.example.ui.components.ConnectionDetailsSheet
 import com.example.ui.components.ExportDialog
 import com.example.ui.screens.FocusTimerScreen
@@ -97,6 +99,10 @@ fun StudyBloomApp(
     val syncState by viewModel.syncState.collectAsState()
     val pendingAiRequests by viewModel.pendingAiRequests.collectAsState()
 
+    // Authentication & Account Migration State
+    val migrationState by viewModel.migrationState.collectAsState()
+    val showAccountReminderDialog by viewModel.showAccountReminderDialog.collectAsState()
+
     // Dialog & Screen Visibility
     var showTaskClockScreen by remember { mutableStateOf(false) }
     var showFocusTimer by remember { mutableStateOf(false) }
@@ -105,6 +111,8 @@ fun StudyBloomApp(
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showConnectionDetailsSheet by remember { mutableStateOf(false) }
+    var showAuthDialog by remember { mutableStateOf(false) }
+    var authIsRegister by remember { mutableStateOf(true) }
 
     LaunchedEffect(openActiveClockTrigger) {
         if (openActiveClockTrigger > 0L && liveTimerSnapshot.isActive) {
@@ -124,14 +132,34 @@ fun StudyBloomApp(
     val themeMode = userProfile?.themeMode ?: "SYSTEM"
 
     StudyBloomTheme(themeMode = themeMode) {
-        // First-Time Onboarding
+        // First-Time Onboarding (Welcome Screen & Optional Setup)
         if (userProfile != null && !userProfile!!.hasCompletedOnboarding) {
             OnboardingScreen(
                 initialProfile = userProfile!!,
                 onComplete = { completedProfile ->
                     viewModel.completeOnboarding(completedProfile)
+                },
+                onOpenAuth = { isRegister ->
+                    authIsRegister = isRegister
+                    showAuthDialog = true
                 }
             )
+
+            if (showAuthDialog) {
+                AuthDialog(
+                    initialIsRegister = authIsRegister,
+                    migrationState = migrationState,
+                    isOnline = networkState.isConnected,
+                    onDismiss = { showAuthDialog = false },
+                    onCreateAccount = { name, email, pass ->
+                        viewModel.createAccount(name, email, pass)
+                    },
+                    onSignIn = { email, pass ->
+                        viewModel.signIn(email, pass)
+                    },
+                    onResetState = { viewModel.resetAuthMigrationState() }
+                )
+            }
             return@StudyBloomTheme
         }
 
@@ -313,7 +341,8 @@ fun StudyBloomApp(
                         onOpenWizard = { showWizard = true },
                         onOpenAssistant = { showAssistantSheet = true },
                         onOpenFocusTimer = { showFocusTimer = true },
-                        onExportPdf = { showExportDialog = true }
+                        onExportPdf = { showExportDialog = true },
+                        onOpenAccountReminder = { viewModel.openAccountReminder() }
                     )
 
                     "plan" -> MyPlanScreen(
@@ -364,6 +393,11 @@ fun StudyBloomApp(
                         syncState = syncState,
                         onSyncNow = { viewModel.syncNow() },
                         onOpenConnectionDetails = { showConnectionDetailsSheet = true },
+                        onOpenAuth = { isRegister ->
+                            authIsRegister = isRegister
+                            showAuthDialog = true
+                        },
+                        onSignOut = { viewModel.signOut() },
                         onSaveProfile = { viewModel.saveProfile(it) },
                         onTestNotification = { viewModel.testReminderNotification() }
                     )
@@ -418,6 +452,35 @@ fun StudyBloomApp(
                 onExportTodayPdf = { viewModel.exportTodaySchedulePdf() },
                 onExportWeeklyPdf = { viewModel.exportWeeklySchedulePdf() },
                 onExportCsv = { viewModel.exportCsvString() }
+            )
+        }
+
+        // Smart Account Creation Reminder Dialog (Never shown during active task timer)
+        if (showAccountReminderDialog && !liveTimerSnapshot.isActive) {
+            AccountCreationReminderDialog(
+                onDismiss = { viewModel.dismissAccountReminder() },
+                onCreateAccount = {
+                    viewModel.dismissAccountReminder()
+                    authIsRegister = true
+                    showAuthDialog = true
+                }
+            )
+        }
+
+        // Authentication & Migration Dialog
+        if (showAuthDialog) {
+            AuthDialog(
+                initialIsRegister = authIsRegister,
+                migrationState = migrationState,
+                isOnline = networkState.isConnected,
+                onDismiss = { showAuthDialog = false },
+                onCreateAccount = { name, email, pass ->
+                    viewModel.createAccount(name, email, pass)
+                },
+                onSignIn = { email, pass ->
+                    viewModel.signIn(email, pass)
+                },
+                onResetState = { viewModel.resetAuthMigrationState() }
             )
         }
     }

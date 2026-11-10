@@ -26,4 +26,10 @@ interface StudySessionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSession(session: StudySessionEntity): Long
+
+    @Query("SELECT COUNT(*) FROM study_sessions")
+    suspend fun getSessionsCount(): Int
+
+    @Query("SELECT * FROM study_sessions")
+    suspend fun getAllSessionsOnce(): List<StudySessionEntity>
 }

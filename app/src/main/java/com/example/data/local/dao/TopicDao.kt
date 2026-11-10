@@ -33,4 +33,10 @@ interface TopicDao {
 
     @Query("DELETE FROM material_topics WHERE materialId = :materialId")
     suspend fun deleteTopicsForMaterial(materialId: Long)
+
+    @Query("SELECT COUNT(*) FROM material_topics")
+    suspend fun getTopicsCount(): Int
+
+    @Query("SELECT * FROM material_topics")
+    suspend fun getAllTopicsOnce(): List<TopicEntity>
 }
