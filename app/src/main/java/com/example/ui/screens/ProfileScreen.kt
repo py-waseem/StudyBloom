@@ -57,7 +57,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.CloudSync
 import com.example.data.local.entity.UserProfileEntity
+import com.example.data.sync.SyncState
 import com.example.ui.components.BloomCard
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.LavenderLight
@@ -67,10 +71,15 @@ import com.example.ui.theme.MintGreenLight
 import com.example.ui.theme.PastelBlue
 import com.example.ui.theme.PastelBlueLight
 import com.example.ui.theme.SoftPinkLight
+import com.example.util.NetworkState
 
 @Composable
 fun ProfileScreen(
     userProfile: UserProfileEntity,
+    networkState: NetworkState = NetworkState(),
+    syncState: SyncState = SyncState(),
+    onSyncNow: () -> Unit = {},
+    onOpenConnectionDetails: () -> Unit = {},
     onSaveProfile: (UserProfileEntity) -> Unit,
     onTestNotification: () -> Unit
 ) {
@@ -357,6 +366,83 @@ fun ProfileScreen(
                             .testTag("profile_test_notification_button")
                     ) {
                         Text(text = "Send Test Reminder Notification 🌿", color = LavenderPrimary, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        // Section: Cloud Synchronization & Offline Mode
+        item {
+            SectionHeader(title = "Cloud Synchronization & Offline Storage")
+        }
+
+        item {
+            BloomCard(backgroundColor = MaterialTheme.colorScheme.surface) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = if (networkState.isConnected) Icons.Default.CloudDone else Icons.Default.CloudOff,
+                            contentDescription = null,
+                            tint = if (networkState.isConnected) MintGreen else LavenderPrimary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (networkState.isConnected) "Status: Online (${networkState.connectionType})" else "Status: Offline Mode Active",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = "Local Room SQLite: Active • Encrypted on device",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Last Cloud Sync:", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(text = syncState.lastSyncFormatted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onOpenConnectionDetails,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text("Offline Guarantees", fontSize = 11.sp, color = LavenderPrimary)
+                        }
+
+                        Button(
+                            onClick = onSyncNow,
+                            enabled = !syncState.isSyncing,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = LavenderPrimary)
+                        ) {
+                            if (syncState.isSyncing) {
+                                Text("Syncing...", fontSize = 11.sp, color = Color.White)
+                            } else {
+                                Icon(imageVector = Icons.Default.CloudSync, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Sync Now", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }

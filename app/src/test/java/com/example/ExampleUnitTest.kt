@@ -80,4 +80,58 @@ class ExampleUnitTest {
         assertTrue(csv.contains("Python Functions"))
         assertTrue(csv.contains("Completed"))
     }
+
+    @Test
+    fun network_state_labels_and_offline_mode_reporting() {
+        val onlineWifi = com.example.util.NetworkState(
+            isConnected = true,
+            connectionType = com.example.util.ConnectionType.WIFI
+        )
+        assertEquals("Online • Wi-Fi", onlineWifi.displayLabel)
+
+        val onlineCellular = com.example.util.NetworkState(
+            isConnected = true,
+            connectionType = com.example.util.ConnectionType.CELLULAR
+        )
+        assertEquals("Online • Cellular", onlineCellular.displayLabel)
+
+        val offlineState = com.example.util.NetworkState(
+            isConnected = false,
+            connectionType = com.example.util.ConnectionType.NONE
+        )
+        assertEquals("Offline Mode", offlineState.displayLabel)
+    }
+
+    @Test
+    fun offline_pending_ai_request_queue_entity_defaults() {
+        val pendingReq = com.example.data.local.entity.PendingAiRequestEntity(
+            requestType = "DOCUMENT_ANALYSIS",
+            title = "Compiler Design.pdf",
+            prompt = "Analyze parser chapters",
+            status = "QUEUED",
+            responsePreview = "Parsed 4 topics locally"
+        )
+        assertEquals("QUEUED", pendingReq.status)
+        assertEquals("DOCUMENT_ANALYSIS", pendingReq.requestType)
+        assertTrue(pendingReq.createdAtTimestamp > 0L)
+    }
+
+    @Test
+    fun task_timer_snapshot_runs_locally_without_network_dependency() {
+        // Verify ActiveTimerSnapshot holds full timestamp state locally
+        val snapshot = com.example.util.ActiveTimerSnapshot(
+            isActive = true,
+            isPaused = false,
+            taskId = 42L,
+            taskTitle = "Django Models",
+            taskSubject = "Django",
+            scheduledDurationMinutes = 60,
+            actualStartTimestamp = 1000L,
+            actualFocusedMillis = 15000L,
+            remainingMillis = 45000L
+        )
+        assertTrue(snapshot.isActive)
+        assertEquals(42L, snapshot.taskId)
+        assertEquals(15000L, snapshot.actualFocusedMillis)
+    }
 }

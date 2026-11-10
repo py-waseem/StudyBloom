@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -77,12 +78,18 @@ import com.example.ui.theme.SoftPink
 import com.example.ui.theme.SoftPinkLight
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.example.data.sync.SyncState
+import com.example.ui.components.ConnectionStatusPill
+import com.example.util.NetworkState
 import java.util.Locale
 
 @Composable
 fun HomeScreen(
     userProfile: UserProfileEntity,
     todayTasks: List<StudyTaskEntity>,
+    networkState: NetworkState = NetworkState(),
+    syncState: SyncState = SyncState(),
+    onOpenConnectionDetails: () -> Unit = {},
     onToggleTaskComplete: (StudyTaskEntity) -> Unit,
     onSkipTask: (StudyTaskEntity) -> Unit,
     onStartFocusForTask: (StudyTaskEntity) -> Unit,
@@ -143,6 +150,16 @@ fun HomeScreen(
                         modifier = Modifier.height(30.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
+
+                    // Connection Status Pill (Online / Offline / Syncing)
+                    ConnectionStatusPill(
+                        networkState = networkState,
+                        syncState = syncState,
+                        onClick = onOpenConnectionDetails
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     // Consistency Streak Pill
                     Row(
                         modifier = Modifier
@@ -179,6 +196,44 @@ fun HomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                // Offline Notice Banner
+                if (!networkState.isConnected) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BloomCard(
+                        backgroundColor = LavenderLight.copy(alpha = 0.6f),
+                        borderColor = Color.Transparent
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = onOpenConnectionDetails)
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudOff,
+                                contentDescription = null,
+                                tint = LavenderPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Offline Mode Active • Local Room Storage",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Active timers & all tasks run 100% offline. Changes sync automatically when reconnected.",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }

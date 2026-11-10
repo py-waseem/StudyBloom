@@ -43,6 +43,7 @@ import com.example.data.local.entity.UserProfileEntity
 import com.example.ui.components.ActiveTimerPill
 import com.example.ui.components.AddTaskDialog
 import com.example.ui.components.AiAssistantSheet
+import com.example.ui.components.ConnectionDetailsSheet
 import com.example.ui.components.ExportDialog
 import com.example.ui.screens.FocusTimerScreen
 import com.example.ui.screens.HomeScreen
@@ -91,6 +92,11 @@ fun StudyBloomApp(
     val assistantMessages by viewModel.assistantMessages.collectAsState()
     val isAssistantThinking by viewModel.isAssistantThinking.collectAsState()
 
+    // Network & Cloud Sync State
+    val networkState by viewModel.networkState.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
+    val pendingAiRequests by viewModel.pendingAiRequests.collectAsState()
+
     // Dialog & Screen Visibility
     var showTaskClockScreen by remember { mutableStateOf(false) }
     var showFocusTimer by remember { mutableStateOf(false) }
@@ -98,6 +104,7 @@ fun StudyBloomApp(
     var showAssistantSheet by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
+    var showConnectionDetailsSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(openActiveClockTrigger) {
         if (openActiveClockTrigger > 0L && liveTimerSnapshot.isActive) {
@@ -289,6 +296,9 @@ fun StudyBloomApp(
                     "home" -> HomeScreen(
                         userProfile = userProfile ?: UserProfileEntity(),
                         todayTasks = todayTasks,
+                        networkState = networkState,
+                        syncState = syncState,
+                        onOpenConnectionDetails = { showConnectionDetailsSheet = true },
                         onToggleTaskComplete = { viewModel.toggleTaskComplete(it) },
                         onSkipTask = { viewModel.skipTask(it) },
                         onStartFocusForTask = { task ->
@@ -350,6 +360,10 @@ fun StudyBloomApp(
 
                     "profile" -> ProfileScreen(
                         userProfile = userProfile ?: UserProfileEntity(),
+                        networkState = networkState,
+                        syncState = syncState,
+                        onSyncNow = { viewModel.syncNow() },
+                        onOpenConnectionDetails = { showConnectionDetailsSheet = true },
                         onSaveProfile = { viewModel.saveProfile(it) },
                         onTestNotification = { viewModel.testReminderNotification() }
                     )
@@ -366,10 +380,24 @@ fun StudyBloomApp(
                 AiAssistantSheet(
                     messages = assistantMessages,
                     isThinking = isAssistantThinking,
+                    isOnline = networkState.isConnected,
                     onSendMessage = { viewModel.sendAssistantMessage(it) },
                     onClose = { showAssistantSheet = false }
                 )
             }
+        }
+
+        // Connection Details & Offline Guarantees Sheet
+        if (showConnectionDetailsSheet) {
+            ConnectionDetailsSheet(
+                networkState = networkState,
+                syncState = syncState,
+                pendingRequests = pendingAiRequests,
+                onSyncNow = { viewModel.syncNow() },
+                onRetryRequest = { viewModel.retryPendingRequest(it) },
+                onDeleteRequest = { viewModel.deletePendingRequest(it) },
+                onDismiss = { showConnectionDetailsSheet = false }
+            )
         }
 
         // Add Custom Task Dialog

@@ -12,8 +12,14 @@ import com.example.data.local.entity.LearningMaterialEntity
 import com.example.data.local.entity.StudySessionEntity
 import com.example.data.local.entity.StudyTaskEntity
 import com.example.data.local.entity.TopicEntity
+import com.example.data.local.entity.PendingAiRequestEntity
 import com.example.data.local.entity.UserProfileEntity
 import com.example.data.repository.StudyBloomRepository
+import com.example.data.sync.SyncManager
+import com.example.data.sync.SyncResult
+import com.example.data.sync.SyncState
+import com.example.util.NetworkConnectivityMonitor
+import com.example.util.NetworkState
 import com.example.util.NotificationHelper
 import com.example.util.PdfExporter
 import kotlinx.coroutines.Job
@@ -56,9 +62,24 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     private val repository: StudyBloomRepository
 
+    // Online/Offline Network & Cloud Sync
+    val networkMonitor = NetworkConnectivityMonitor(application)
+    val networkState: StateFlow<NetworkState> = networkMonitor.networkState
+
+    private val syncManager: SyncManager
+    val syncState: StateFlow<SyncState>
+
+    val pendingAiRequests: StateFlow<List<PendingAiRequestEntity>>
+
     init {
         val database = StudyBloomDatabase.getInstance(application)
-        repository = StudyBloomRepository(database, AiRepositoryImpl())
+        val aiRepo = AiRepositoryImpl()
+        repository = StudyBloomRepository(database, aiRepo)
+        syncManager = SyncManager(application, repository, aiRepo, networkMonitor)
+        syncState = syncManager.syncState
+        pendingAiRequests = repository.pendingAiRequests
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
         viewModelScope.launch {
             repository.checkAndUpdateStreak()
         }
@@ -254,7 +275,8 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
         contentSample: String
     ) {
         viewModelScope.launch {
-            _userMessage.value = "Analyzing document with StudyBloom AI..."
+            val isOnline = networkState.value.isConnected
+            _userMessage.value = if (isOnline) "Analyzing document with StudyBloom AI..." else "Analyzing document locally in Room storage..."
             val result = repository.addMaterialAndAnalyze(
                 title = title,
                 fileType = fileType,
@@ -263,9 +285,21 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 contentSample = contentSample
             )
             if (result.isSuccess) {
-                _userMessage.value = "Material '$title' analyzed and added with learning modules! ✨"
+                if (!isOnline) {
+                    val materialId = result.getOrNull()
+                    repository.queueAiRequest(
+                        type = "DOCUMENT_ANALYSIS",
+                        title = "Document: $title",
+                        prompt = contentSample.take(300),
+                        relatedEntityId = materialId,
+                        initialPreview = "Structured learning topics mapped locally."
+                    )
+                    _userMessage.value = "Analyzed '$title' locally! Saved in Room & queued for cloud sync. ☁️"
+                } else {
+                    _userMessage.value = "Material '$title' analyzed and added with learning modules! ✨"
+                }
             } else {
-                _userMessage.value = "Uploaded document saved. AI analysis finished."
+                _userMessage.value = "Document saved locally in Room database."
             }
         }
     }
@@ -526,6 +560,7 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
         _isAssistantThinking.value = true
 
         viewModelScope.launch {
+            val isOnline = networkState.value.isConnected
             val profile = repository.getProfileOnce()
             val pending = repository.pendingTasks.stateIn(this).value
             val todayTasksList = todayTasks.value
@@ -541,10 +576,58 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
             )
 
             val reply = repository.askAssistant(prompt, context)
+            if (!isOnline) {
+                repository.queueAiRequest(
+                    type = "ASSISTANT_QUERY",
+                    title = "AI Query: ${prompt.take(30)}",
+                    prompt = prompt,
+                    initialPreview = reply
+                )
+            }
+
             _isAssistantThinking.value = false
             val updated = _assistantMessages.value.toMutableList()
-            updated.add(AssistantMessage(isUser = false, text = reply))
+            val replyText = if (!isOnline) {
+                "$reply\n\n🌿 (Generated offline with StudyBloom Local Engine • Queued for cloud sync)"
+            } else {
+                reply
+            }
+            updated.add(AssistantMessage(isUser = false, text = replyText))
             _assistantMessages.value = updated
+        }
+    }
+
+    // --- Cloud Sync & Offline Management ---
+    fun syncNow() {
+        viewModelScope.launch {
+            val res = syncManager.performSync(isManual = true)
+            when (res) {
+                is SyncResult.Success -> {
+                    _userMessage.value = if (res.itemsSynced > 0)
+                        "Synced ${res.itemsSynced} pending AI requests & local study data with cloud ☁️"
+                    else
+                        "StudyBloom is up to date • Synced with cloud"
+                }
+                is SyncResult.Offline -> {
+                    _userMessage.value = "Working offline • All tasks and active timers are safe in local Room storage"
+                }
+                is SyncResult.Error -> {
+                    _userMessage.value = "Sync paused. Local Room database remains safe and active."
+                }
+            }
+        }
+    }
+
+    fun retryPendingRequest(id: Long) {
+        viewModelScope.launch {
+            syncNow()
+        }
+    }
+
+    fun deletePendingRequest(id: Long) {
+        viewModelScope.launch {
+            repository.deleteAiRequest(id)
+            _userMessage.value = "Queued request removed."
         }
     }
 

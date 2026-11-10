@@ -54,6 +54,7 @@ import com.example.ui.viewmodel.AssistantMessage
 fun AiAssistantSheet(
     messages: List<AssistantMessage>,
     isThinking: Boolean,
+    isOnline: Boolean = true,
     onSendMessage: (String) -> Unit,
     onClose: () -> Unit
 ) {
@@ -116,6 +117,27 @@ fun AiAssistantSheet(
                 }
                 IconButton(onClick = onClose) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+                }
+            }
+
+            if (!isOnline) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(LavenderLight.copy(alpha = 0.7f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "☁️", fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Offline Mode: Local AI active. Answers saved to Room & queued for cloud sync.",
+                        fontSize = 11.sp,
+                        color = LavenderPrimary,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
