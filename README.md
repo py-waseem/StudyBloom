@@ -1,283 +1,204 @@
-# 🌸 StudyBloom
+# 🌸 StudyBloom (v1.0.0)
 
-### Plan Smarter. Learn Better. Grow Every Day.
+<p align="center">
+  <img src="app/src/main/res/drawable-nodpi/img_studybloom_brand.png" alt="StudyBloom Banner" width="480"/>
+</p>
 
-StudyBloom is an AI-powered study and productivity planner built for students, developers, and lifelong learners.
+<p align="center">
+  <strong>Plan gently. Learn consistently. Grow every day.</strong><br>
+  <em>Let Your Knowledge Bloom.</em>
+</p>
 
-It helps users transform study materials and personal learning goals into organized daily and weekly schedules using AI.
-
-With intelligent scheduling, live study timers, reminders, and progress analytics, StudyBloom aims to make learning more structured, productive, and consistent.
-
----
-
-## ✨ Features
-
-### 🤖 AI-Powered Study Planning
-- Upload study materials and documents.
-- Extract chapters, topics, and subtopics.
-- Analyze topic difficulty and estimated study time.
-- Generate personalized study schedules using AI.
-- Adjust schedules according to available time and deadlines.
-
-### 📅 Smart Scheduling
-- Create daily and weekly study plans.
-- Set available study hours and preferred time slots.
-- Organize tasks according to priority and difficulty.
-- Include breaks, revision sessions, and coding practice.
-- Reschedule unfinished tasks intelligently.
-
-### ⏱️ Live Study Timer
-- Start a timer for an individual scheduled task.
-- Track actual focused study time.
-- Pause, resume, finish, or extend a session.
-- View elapsed and remaining time.
-- Preserve timer state when navigating away from the screen.
-- Recover active sessions after closing and reopening the app.
-- Track planned versus actual study duration.
-
-### 🔔 Smart Reminders
-- Receive notifications before scheduled tasks.
-- Get reminders when study sessions begin.
-- Receive gentle notifications when planned sessions end.
-- Manage notification preferences.
-
-### 📊 Progress Analytics
-- Track daily and weekly study hours.
-- Monitor completed and pending tasks.
-- Compare planned study time with actual focused time.
-- View learning consistency and productivity trends.
-
-### 📄 Schedule Export
-- Download daily schedules as PDF.
-- Export weekly study plans.
-- Keep a personal copy of your learning schedule.
-
-### 🌐 Online and Offline Support
-
-StudyBloom is designed to work both online and offline.
-
-**Offline functionality:**
-- View saved schedules.
-- Manage tasks.
-- Use the study timer.
-- Track progress.
-- Access locally stored materials.
-- Receive locally scheduled reminders.
-
-**Online functionality:**
-- AI document analysis.
-- AI-generated study plans.
-- AI study assistant.
-- Cloud synchronization and backup.
+<p align="center">
+  <img src="https://img.shields.io/badge/Release-v1.0.0-8B70DF?style=for-the-badge&logo=android" alt="Release v1.0.0"/>
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android" alt="Platform Android"/>
+  <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin" alt="Kotlin"/>
+  <img src="https://img.shields.io/badge/Jetpack_Compose-Material_3-4285F4?style=for-the-badge&logo=jetpackcompose" alt="Jetpack Compose"/>
+  <img src="https://img.shields.io/badge/Architecture-Offline--First_MVVM-34D399?style=for-the-badge" alt="Architecture"/>
+  <img src="https://img.shields.io/badge/Database-Room_SQLite_v4-FFA000?style=for-the-badge&logo=sqlite" alt="Room SQLite"/>
+</p>
 
 ---
 
-## 🎨 Design Philosophy
+## 📖 Overview
 
-StudyBloom uses a clean, soft, and aesthetic interface designed to make studying feel organized and comfortable.
+**StudyBloom** is a native, offline-capable Android application built with Kotlin and Jetpack Compose designed specifically for programmers, university students, and self-directed learners. 
 
-Design direction:
-- Elegant English cursive calligraphy logo.
-- Pastel lavender and cream color palette.
-- Soft purple accents.
-- Rounded cards and smooth animations.
-- Beautiful circular study timer.
-- Minimal navigation and readable typography.
-
-**Brand tagline:** Let Your Knowledge Bloom.
+Rather than functioning as a rudimentary to-do checklist, StudyBloom pairs an **intelligent AI study engine** with an **aesthetic task clock & live study timer**, automated scheduling, and a local-first Room database. Learners upload their syllabi, programming textbooks, or documentation, define their daily availability, and receive structured, realistic study blocks tailored to their personal cognitive rhythms.
 
 ---
 
-## 🛠️ Technology Stack
+## 🌟 What's New in Version 1.0 (v1)
 
-The intended architecture uses native Android development.
+### 🌸 Elegant Wordmark & Adaptive App Icon Branding
+* **Custom Calligraphy Identity:** Deep purple calligraphy lettering with lavender wave accents, an open-book motif, fresh green leaves, and delicate sparkles.
+* **Full Adaptive Icon Layering:** Multi-density launcher mipmaps (`hdpi`, `mdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) with a soft cream (`#FCF6EE`) vector background and 66dp safe-zone foreground artwork.
+* **Integrated In-App Assets:** High-resolution brand hero banners and wordmark drawables featured across Home, Onboarding, and Profile screens.
 
-| Component | Technology |
+### 🚀 Welcoming Onboarding & Unrestricted Guest Mode
+* **First-Time Welcome Screen:** Warm greeting (*"Welcome to StudyBloom 🌸 • Your personal space to plan, learn, and grow."*) with zero forced registration.
+* **Instant Guest Mode:** Full access to all study scheduling, document analysis, live study timers, local notifications, and progress tracking with zero account barriers.
+* **Encrypted Local Storage:** All guest data is stored on-device in Room SQLite.
+* **Non-Intrusive Profile Indicator:** Subtle `👤 Guest Account` top-bar badge keeping the UI clean and distraction-free.
+
+### 🌱 Smart Account Creation & 5-Step Verified Migration
+* **Gentle Reminders:** Non-intrusive dialog (*"Your progress is worth protecting! 🌱"*) outlining the benefits of cloud backup, multi-device sync, and device recovery.
+* **Timer Safety Guard:** Never interrupts an active study session or running timer; triggers gently only after a completed session or from the Profile screen.
+* **Verifiable Data Migration Pipeline:**
+  1. *Confirm Local Data:* Audits and counts local Room entities (tasks, sessions, materials, topics).
+  2. *Verify Credentials:* Validates email format and password strength while checking network connectivity.
+  3. *Encrypted Cloud Upload:* Safely transfers existing records with live progress reporting.
+  4. *Parity Verification:* Verifies 100% parity between uploaded records and local database entries.
+  5. *Mark Registered:* Activates cloud backup flags and sync timestamps without duplicating data.
+* **Zero Data Loss Guarantee:** If network disconnects during migration, local data is left completely intact for safe retry.
+
+### ⏱️ Aesthetic Task Clock & Persistent Live Timer
+* **Circular Analog Design:** Large, elegant circular clock face with a moving clock hand, smooth circular progress ring, and pastel lavender glowing accents.
+* **Task Schedule Connected:** Directly linked to scheduled tasks; calculates actual start times, elapsed focus time, overtime, and pause durations.
+* **Background & Navigation Resilience:** Powered by `TaskTimerManager`; active sessions persist when navigating between tabs, switching apps, or reopening the app.
+* **Persistent Bottom Banner:** Interactive `ActiveTimerPill` floating above the navigation bar allowing 1-tap pause/resume and quick clock view.
+
+### 🌐 Online-Enabled, Offline-Capable Architecture
+* **Real-Time Connectivity Monitor:** Detects Wi-Fi, Cellular, and Offline modes instantly.
+* **Offline AI Request Queue:** AI document analysis and scheduling requests initiated offline are queued in Room (`PendingAiRequestEntity`) and automatically processed upon reconnect.
+* **Visual Status Pill:** Top-bar pill displaying connection status (`Online • Wi-Fi`, `Offline Mode Active`, or `Syncing...`) with tap-to-inspect guarantees.
+
+---
+
+## 📱 Key Features
+
+| Feature | Description |
 |---|---|
-| Platform | Android |
-| Language | Kotlin |
-| UI | Jetpack Compose |
-| Design | Material 3 |
-| Architecture | MVVM |
-| Local Database | Room |
-| Preferences | DataStore |
-| Background Tasks | WorkManager |
-| AI Integration | Google Gemini API |
-| Document Access | Android Storage Access Framework |
-| Notifications | Android Notification System |
-| Backend | Secure API server |
-| Export | PDF generation |
-
-*Update this section to reflect the actual technologies and versions used in the implementation.*
+| **📚 AI Material Breakdown** | Upload textbooks, code snippets, or notes (PDF, TXT, Code). AI extracts modules, difficulty ratings (EASY, MEDIUM, HARD), prerequisite sequences, and time estimates. |
+| **📅 Intelligent Schedule Wizard** | Multi-step planner that builds realistic daily blocks around your wake/sleep times, peak focus hours, and pomodoro breaks without double-booking. |
+| **⏱️ Aesthetic Task Clock** | Circular analog study clock with live elapsed/remaining countdowns, overtime tracking, and completion logging. |
+| **🤖 Contextual AI Assistant** | In-app study mentor sheet for real-time advice, debugging help, and gentle schedule adjustments. |
+| **📈 Progress & Analytics** | Daily and weekly focus hour charts, completion rates, study streak tracking, and session histories. |
+| **📄 PDF & CSV Schedule Export** | Generates beautifully styled printable daily/weekly schedule PDFs and CSV files for external calendars. |
+| **🔔 Gentle Notifications** | Android notification system with dedicated channels for session reminders and completion alerts. |
 
 ---
 
-## 🏗️ Application Architecture
+## 🛠️ Technical Architecture & Stack
 
-StudyBloom follows a modular architecture to keep the application maintainable and scalable.
-
-Suggested project structure:
+StudyBloom is built with modern, idiomatic Android practices following Clean Architecture and MVVM.
 
 ```text
-StudyBloom/
-│
-├── app/
-│   ├── src/main/
-│   │   ├── java/com/studybloom/
-│   │   │
-│   │   ├── data/
-│   │   │   ├── local/
-│   │   │   ├── remote/
-│   │   │   └── repository/
-│   │   │
-│   │   ├── domain/
-│   │   │   ├── model/
-│   │   │   ├── usecase/
-│   │   │   └── repository/
-│   │   │
-│   │   ├── presentation/
-│   │   │   ├── home/
-│   │   │   ├── planner/
-│   │   │   ├── timer/
-│   │   │   ├── materials/
-│   │   │   ├── progress/
-│   │   │   └── profile/
-│   │   │
-│   │   └── navigation/
-│   │
-│   └── build.gradle.kts
-│
-├── backend/
-│   ├── api/
-│   ├── services/
+app/src/main/java/com/example/
+├── MainActivity.kt                     # Single activity entry point with edge-to-edge support
+├── ui/
+│   ├── StudyBloomApp.kt               # Central navigation scaffold, tabs, and sheet controllers
+│   ├── theme/                         # Material 3 colors (Lavender, Mint, Pink, Cream), Type, Shape
+│   ├── screens/
+│   │   ├── HomeScreen.kt              # Daily schedule, streak pill, connection status, quick actions
+│   │   ├── TaskClockScreen.kt         # Fullscreen aesthetic analog circular timer
+│   │   ├── MyPlanScreen.kt            # Calendar-based daily & weekly planner
+│   │   ├── MaterialsScreen.kt         # Study documents, topic breakdown & AI extraction
+│   │   ├── ProgressScreen.kt          # Focus charts, streak statistics & session history
+│   │   ├── ProfileScreen.kt           # Account status, cloud backup, theme & reminder settings
+│   │   ├── OnboardingScreen.kt        # Welcome screen, Guest Mode entry & personalization
+│   │   ├── ScheduleWizardScreen.kt    # Step-by-step AI schedule generator
+│   │   └── FocusTimerScreen.kt        # Quick Pomodoro focus tool
+│   ├── components/                    # Reusable M3 cards, badges, dialogs, sheets
+│   │   ├── AuthDialog.kt              # Account registration & sign-in modal
+│   │   ├── AccountCreationReminderDialog.kt # Gentle progress protection reminder
+│   │   ├── ActiveTimerPill.kt         # Persistent timer indicator pill above navigation
+│   │   ├── ConnectionStatusPill.kt    # Real-time online/offline network indicator
+│   │   └── AiAssistantSheet.kt        # Interactive AI study assistant modal
+│   └── viewmodel/
+│       └── StudyBloomViewModel.kt     # Single source of truth for UI state & coroutine operations
+├── data/
+│   ├── local/                         # Room Database (v4)
+│   │   ├── StudyBloomDatabase.kt      # Database builder, seed callback, migrations
+│   │   ├── dao/                       # DAOs for Tasks, Sessions, Materials, Topics, Profile, AI Queue
+│   │   └── entity/                    # Room entities with indexes and relations
+│   ├── auth/
+│   │   └── AuthManager.kt             # Guest-to-Account verified migration engine
 │   ├── ai/
-│   └── configuration/
-│
-├── README.md
-└── .gitignore
+│   │   ├── AiRepository.kt            # Gemini API & offline fallback engine
+│   │   └── AiRepositoryImpl.kt        # Document analysis & schedule generation algorithms
+│   ├── sync/
+│   │   └── SyncManager.kt             # Cloud sync orchestrator & offline queue processor
+│   └── repository/
+│       └── StudyBloomRepository.kt    # Unified data repository
+└── util/
+    ├── NetworkConnectivityMonitor.kt  # StateFlow-based network callback listener
+    ├── TaskTimerManager.kt            # Timestamp-based resilient study clock manager
+    ├── NotificationHelper.kt          # Notification channels & reminder triggers
+    └── PdfExporter.kt                 # Native Android PdfDocument generation
 ```
 
-The exact structure may differ depending on the final implementation.
+### Technology Matrix
+
+* **Language:** Kotlin 2.0.21
+* **UI Toolkit:** Jetpack Compose (1.7.5) with Material 3 (1.3.1)
+* **Local Persistence:** Room Database 2.6.1 with KSP (Kotlin Symbol Processing)
+* **Asynchronous Flow:** Kotlin Coroutines & `StateFlow`
+* **Architecture:** MVVM (Model-View-ViewModel) + Repository Pattern
+* **Document Export:** Native Android `android.graphics.pdf.PdfDocument`
+* **Network Sensing:** Android `ConnectivityManager.NetworkCallback`
+* **AI Capabilities:** Google Gemini AI Model Integration (with structured JSON generation)
+* **Testing:** JUnit 4 + Robolectric unit testing suite (all tests passing)
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+* **Android Studio:** Ladybug (2024.2.1) or newer
+* **Android SDK:** Compile SDK 35, Minimum SDK 26 (Android 8.0 Oreo)
+* **JDK:** Java 17 or Java 21
 
-- Android Studio.
-- Kotlin-compatible Android development environment.
-- Android SDK.
-- JDK version supported by the project.
-- Internet connection for AI functionality.
+### Building from Source
 
-### Installation
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/StudyBloom.git
+   cd StudyBloom
+   ```
 
-1. Clone the repository:
+2. **Open in Android Studio:**
+   Select **File > Open** and choose the `StudyBloom` project directory.
 
-```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
-```
+3. **Configure Environment Secrets (Optional):**
+   If integrating your personal Google Gemini API key for server-side AI processing, copy `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+   Add your Gemini API key in the Secrets configuration or `.env`:
+   ```env
+   GEMINI_API_KEY=your_actual_gemini_api_key_here
+   ```
 
-2. Open the project in Android Studio.
+4. **Build and Run:**
+   * Select your connected physical device or Android Virtual Device (AVD).
+   * Click **Run** (`Shift + F10`) or execute via Gradle:
+   ```bash
+   gradle assembleDebug
+   ```
 
-3. Allow Gradle to synchronize dependencies.
-
-4. Configure the backend API endpoint.
-
-5. Run the application on an Android emulator or physical device.
-
-### AI Configuration
-
-StudyBloom uses Gemini-powered AI functionality.
-
-For security:
-- Keep Gemini API credentials on the backend.
-- Never hardcode API keys inside the Android application.
-- Use authenticated API requests between the Android app and backend.
-- Configure environment variables on the backend.
-
-Example backend environment variable:
-
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
-Do not commit your real API key to GitHub.
+5. **Run Unit Tests:**
+   ```bash
+   gradle :app:testDebugUnitTest
+   ```
 
 ---
 
-## 🔐 Privacy and Data Management
+## 🔒 Privacy, Security & Data Ownership
 
-StudyBloom should prioritize user privacy.
-
-- Store essential application data locally.
-- Request document access only when needed.
-- Avoid uploading documents without user consent.
-- Protect communication between the app and backend.
-- Never expose API credentials in the APK.
-- Provide appropriate controls for deleting user data.
+* **Local-First Privacy:** All tasks, uploaded learning materials, topic notes, and focus logs are stored locally on your device in an encrypted Room SQLite database.
+* **No Forced Cloud Lock-in:** Guest Mode allows unrestricted daily use without transmitting personal credentials.
+* **Transparent Sync:** Users have complete control over cloud backups and can manually sync or sign out at any time.
 
 ---
 
-## 🗺️ Future Improvements
+## 📄 License
 
-Potential future development:
-
-- Cloud synchronization across multiple devices.
-- More advanced AI-generated revision strategies.
-- Spaced repetition and flashcards.
-- Coding practice planner.
-- Integration with calendar applications.
-- Study performance recommendations.
-- More detailed productivity analytics.
-- Personalized learning recommendations.
-
----
-
-## 🤝 Contributing
-
-Contributions, suggestions, and bug reports are welcome.
-
-If you would like to contribute:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes.
-4. Test your implementation.
-5. Submit a pull request.
-
----
-
-## 📌 Project Status
-
-StudyBloom is under development.
-
-Features and implementation details may change as development progresses.
-
----
-
-## 👨‍💻 Developer
-
-**Project:** StudyBloom  
-**Category:** AI-Powered Education & Productivity  
-**Platform:** Android  
-**Primary Language:** Kotlin
-
----
-
-## 📜 License
-
-Choose and add an appropriate open-source license before distributing the project.
+StudyBloom is open-source software licensed under the [Apache License, Version 2.0](LICENSE).
 
 ---
 
 <p align="center">
-
-### 🌸 StudyBloom
-
-**Let Your Knowledge Bloom.**
-
-*Plan Smarter. Learn Better. Grow Every Day.*
-
+  <strong>StudyBloom v1.0.0</strong><br>
+  <em>Designed and engineered with care for students and developers worldwide. 🌸</em>
 </p>
