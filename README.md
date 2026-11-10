@@ -1,7 +1,7 @@
 # 🌸 StudyBloom (v1.0.0)
 
 <p align="center">
-  <img src="app/src/main/res/drawable-nodpi/img_studybloom_brand.png" alt="StudyBloom Banner" width="480"/>
+  <img src="app/src/main/res/drawable/img_studybloom_brand.png" alt="StudyBloom Banner" width="600"/>
 </p>
 
 <p align="center">
