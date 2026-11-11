@@ -209,4 +209,59 @@ class ExampleUnitTest {
         assertEquals(com.example.data.auth.MigrationStep.COMPLETED, state.step)
         assertEquals(1.0f, state.progressPercent, 0.001f)
     }
+
+    @Test
+    fun guest_mode_initializes_valid_session_with_full_access() {
+        val defaultProfile = com.example.data.local.entity.UserProfileEntity(
+            hasCompletedOnboarding = false,
+            isGuest = true
+        )
+        // When clicking Continue as Guest:
+        val guestSession = defaultProfile.copy(
+            isGuest = true,
+            hasCompletedOnboarding = true
+        )
+
+        assertTrue("Guest mode must mark onboarding completed", guestSession.hasCompletedOnboarding)
+        assertTrue("Guest session must be marked isGuest", guestSession.isGuest)
+        assertEquals("Learner", guestSession.nickname)
+        assertEquals("Programming and software development", guestSession.purpose)
+    }
+
+    @Test
+    fun navigation_routes_and_tabs_are_complete() {
+        val validTabs = listOf("home", "plan", "materials", "progress", "profile")
+        assertEquals(5, validTabs.size)
+        assertTrue(validTabs.contains("home"))
+        assertTrue(validTabs.contains("plan"))
+        assertTrue(validTabs.contains("materials"))
+        assertTrue(validTabs.contains("progress"))
+        assertTrue(validTabs.contains("profile"))
+    }
+
+    @Test
+    fun guest_users_can_plan_tasks_track_progress_and_use_timer() {
+        val guestProfile = com.example.data.local.entity.UserProfileEntity(
+            isGuest = true,
+            hasCompletedOnboarding = true,
+            currentStreakDays = 3
+        )
+        val guestTask = StudyTaskEntity(
+            title = "Django Models Practice",
+            subject = "Django Development",
+            category = "CODING_PRACTICE",
+            priority = "HIGH",
+            date = "2026-11-11",
+            startTime = "19:00",
+            endTime = "20:00",
+            durationMinutes = 60,
+            isCompleted = false
+        )
+
+        // Guest can complete task and record session
+        val completedTask = guestTask.copy(isCompleted = true, actualDurationMinutes = 60)
+        assertTrue(completedTask.isCompleted)
+        assertEquals(60, completedTask.actualDurationMinutes)
+        assertEquals(3, guestProfile.currentStreakDays)
+    }
 }

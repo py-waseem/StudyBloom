@@ -106,186 +106,34 @@ fun OnboardingScreen(
 
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (step == OnboardingStep.WELCOME) {
-            // STEP 0: First-Time Welcome Screen
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // StudyBloom Brand Hero Banner
-            Image(
-                painter = painterResource(id = R.drawable.img_studybloom_brand),
-                contentDescription = "StudyBloom Brand Logo",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(24.dp))
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Welcome to StudyBloom 🌸",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = LavenderPrimary,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Your personal space to plan, learn, and grow.",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Feature Highlights
-            BloomCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = MaterialTheme.colorScheme.surface
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(LavenderLight),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "📚", fontSize = 16.sp)
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Intelligent AI Study Schedules", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text(text = "Turn syllabus & textbooks into realistic daily blocks", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(MintGreenLight),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "⏱️", fontSize = 16.sp)
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Aesthetic Task Clock & Live Timer", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text(text = "Circular analog clock directly linked to your study sessions", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(PastelBlueLight),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "🌱", fontSize = 16.sp)
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "100% Offline-Ready & Private", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                            Text(text = "All schedules and notes stored securely on your device in Room", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Primary Option 1: Continue as Guest
-            Button(
-                onClick = {
-                    step = OnboardingStep.PERSONALIZE
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .testTag("welcome_continue_as_guest_button"),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = LavenderPrimary)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Continue as Guest", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color.White)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Primary Option 2: Create an Account
-            OutlinedButton(
-                onClick = {
-                    onOpenAuth(true)
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .testTag("welcome_create_account_button"),
-                shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, LavenderPrimary)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null, tint = LavenderPrimary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Create an Account", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = LavenderPrimary)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Sign In option for existing users
-            TextButton(
-                onClick = {
-                    onOpenAuth(false)
-                },
-                modifier = Modifier.testTag("welcome_sign_in_button")
-            ) {
-                Text(
-                    text = "Already have an account? Sign In",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+    if (step == OnboardingStep.WELCOME) {
+        LoginScreen(
+            onContinueAsGuest = {
+                onComplete(
+                    initialProfile.copy(
+                        isGuest = true,
+                        hasCompletedOnboarding = true
+                    )
                 )
+            },
+            onCreateAccount = {
+                onOpenAuth(true)
+            },
+            onSignIn = {
+                onOpenAuth(false)
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "No forced registration. Your privacy comes first. You can always create an account later to enable cloud backup.",
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                lineHeight = 16.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-        } else {
+        )
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             // STEP 1: Personalize Study Preferences (Guest or New Account)
             Row(
                 modifier = Modifier.fillMaxWidth(),

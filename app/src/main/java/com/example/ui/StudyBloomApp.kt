@@ -49,6 +49,7 @@ import com.example.ui.components.ConnectionDetailsSheet
 import com.example.ui.components.ExportDialog
 import com.example.ui.screens.FocusTimerScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.MaterialsScreen
 import com.example.ui.screens.MyPlanScreen
 import com.example.ui.screens.OnboardingScreen
@@ -65,7 +66,9 @@ import com.example.ui.viewmodel.StudyBloomViewModel
 @Composable
 fun StudyBloomApp(
     viewModel: StudyBloomViewModel = viewModel(),
-    openActiveClockTrigger: Long = 0L
+    openActiveClockTrigger: Long = 0L,
+    openAuthOnStart: Boolean = false,
+    initialIsRegister: Boolean = true
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
@@ -111,8 +114,8 @@ fun StudyBloomApp(
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showConnectionDetailsSheet by remember { mutableStateOf(false) }
-    var showAuthDialog by remember { mutableStateOf(false) }
-    var authIsRegister by remember { mutableStateOf(true) }
+    var showAuthDialog by remember { mutableStateOf(openAuthOnStart) }
+    var authIsRegister by remember { mutableStateOf(initialIsRegister) }
 
     LaunchedEffect(openActiveClockTrigger) {
         if (openActiveClockTrigger > 0L && liveTimerSnapshot.isActive) {
@@ -132,15 +135,22 @@ fun StudyBloomApp(
     val themeMode = userProfile?.themeMode ?: "SYSTEM"
 
     StudyBloomTheme(themeMode = themeMode) {
-        // First-Time Onboarding (Welcome Screen & Optional Setup)
+        // First-Time Onboarding (Redesigned Login / Welcome Screen)
         if (userProfile != null && !userProfile!!.hasCompletedOnboarding) {
-            OnboardingScreen(
-                initialProfile = userProfile!!,
-                onComplete = { completedProfile ->
-                    viewModel.completeOnboarding(completedProfile)
+            LoginScreen(
+                onContinueAsGuest = {
+                    val guestProfile = userProfile!!.copy(
+                        isGuest = true,
+                        hasCompletedOnboarding = true
+                    )
+                    viewModel.completeOnboarding(guestProfile)
                 },
-                onOpenAuth = { isRegister ->
-                    authIsRegister = isRegister
+                onCreateAccount = {
+                    authIsRegister = true
+                    showAuthDialog = true
+                },
+                onSignIn = {
+                    authIsRegister = false
                     showAuthDialog = true
                 }
             )
@@ -241,9 +251,7 @@ fun StudyBloomApp(
                     }
 
                     NavigationBar(
-                        modifier = Modifier
-                            .windowInsetsPadding(WindowInsets.navigationBars)
-                            .testTag("bottom_nav_bar"),
+                        modifier = Modifier.testTag("bottom_nav_bar"),
                         containerColor = MaterialTheme.colorScheme.surface,
                         tonalElevation = 6.dp
                     ) {
@@ -320,6 +328,12 @@ fun StudyBloomApp(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                if (currentTab != "home") {
+                    BackHandler {
+                        viewModel.setTab("home")
+                    }
+                }
+
                 when (currentTab) {
                     "home" -> HomeScreen(
                         userProfile = userProfile ?: UserProfileEntity(),

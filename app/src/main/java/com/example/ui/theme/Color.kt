@@ -2,6 +2,14 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Exact Welcome & Login Screen Color Tokens
+val LoginWarmCream = Color(0xFFF8F3E1)
+val LoginPureWhite = Color(0xFFFFFFFF)
+val LoginDeepPlum = Color(0xFF1E1633)
+val LoginGuestGreen = Color(0xFF2E7D4F)
+val LoginSoftPurple = Color(0xFF9B7FC9)
+val LoginCardBackground = Color(0xFFF0F0F0)
+
 // StudyBloom Soft Pastel Palette
 // Primary: Soft Lavender / Indigo
 val LavenderPrimary = Color(0xFF7A5AF8)

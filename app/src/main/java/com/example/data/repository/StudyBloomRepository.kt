@@ -244,6 +244,69 @@ class StudyBloomRepository(
 
     suspend fun deleteTask(id: Long) = taskDao.deleteTaskById(id)
 
+    suspend fun ensureActiveTasksForToday() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val todayTasks = taskDao.getTasksForDateOnce(today)
+        if (todayTasks.isEmpty()) {
+            val allTasks = taskDao.getAllTasksOnce()
+            val pendingFromPast = allTasks.filter { !it.isCompleted && !it.isSkipped }
+            if (pendingFromPast.isNotEmpty()) {
+                pendingFromPast.take(3).forEach { task ->
+                    taskDao.rescheduleTask(task.id, today, task.startTime, task.endTime)
+                }
+            } else if (allTasks.isEmpty()) {
+                val starterTasks = listOf(
+                    StudyTaskEntity(
+                        title = "Python Functions & Lambda Expressions",
+                        description = "Review functional programming concepts, closures, and type hints",
+                        category = "PROGRAMMING",
+                        subject = "Python Core",
+                        priority = "HIGH",
+                        date = today,
+                        startTime = "07:00",
+                        endTime = "07:45",
+                        durationMinutes = 45,
+                        isCompleted = true,
+                        taskType = "STUDY",
+                        learningObjective = "Master higher-order functions and clean lambda usage",
+                        estimatedDifficulty = "MEDIUM"
+                    ),
+                    StudyTaskEntity(
+                        title = "Django Models & QuerySet Filtering",
+                        description = "Practice complex lookups with Q objects and annotate() aggregations",
+                        category = "CODING_PRACTICE",
+                        subject = "Django Development",
+                        priority = "HIGH",
+                        date = today,
+                        startTime = "19:00",
+                        endTime = "20:00",
+                        durationMinutes = 60,
+                        isCompleted = false,
+                        taskType = "CODING",
+                        learningObjective = "Build optimized ORM queries without N+1 query traps",
+                        estimatedDifficulty = "HARD"
+                    ),
+                    StudyTaskEntity(
+                        title = "Quick Revision: REST API Status Codes",
+                        description = "Review 200 vs 201, 400 vs 422, and idempotency",
+                        category = "REVISION",
+                        subject = "Web Architecture",
+                        priority = "LOW",
+                        date = today,
+                        startTime = "20:15",
+                        endTime = "20:45",
+                        durationMinutes = 30,
+                        isCompleted = false,
+                        taskType = "REVISION",
+                        learningObjective = "Memorize HTTP status best practices",
+                        estimatedDifficulty = "EASY"
+                    )
+                )
+                taskDao.insertTasks(starterTasks)
+            }
+        }
+    }
+
     suspend fun recordCompletedTaskSession(
         taskId: Long,
         plannedDurationMinutes: Int,

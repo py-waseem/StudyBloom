@@ -181,6 +181,11 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
     val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            repository.ensureActiveTasksForToday()
+            repository.checkAndUpdateStreak()
+        }
+
         // Observe plan date tasks
         viewModelScope.launch {
             _selectedPlanDate.collect { date ->

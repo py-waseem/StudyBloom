@@ -36,7 +36,7 @@ import java.util.Locale
         AvailabilitySlotEntity::class,
         PendingAiRequestEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class StudyBloomDatabase : RoomDatabase() {
@@ -72,35 +72,31 @@ abstract class StudyBloomDatabase : RoomDatabase() {
                 super.onCreate(db)
                 INSTANCE?.let { database ->
                     CoroutineScope(Dispatchers.IO).launch {
-                        populateInitialData(database)
+                        populateCleanInitialState(database)
                     }
                 }
             }
 
-            private suspend fun populateInitialData(db: StudyBloomDatabase) {
+            private suspend fun populateCleanInitialState(db: StudyBloomDatabase) {
                 val profileDao = db.userProfileDao()
-                val slotsDao = db.availabilitySlotDao()
-                val materialDao = db.learningMaterialDao()
-                val topicDao = db.topicDao()
-                val taskDao = db.studyTaskDao()
 
-                // Default Profile - starts in welcoming onboarding flow as Guest
+                // Clean empty profile with zero demo/sample data
                 profileDao.insertProfile(
                     UserProfileEntity(
                         id = 1,
-                        name = "Alex",
-                        nickname = "Alex",
-                        purpose = "Programming and software development",
+                        name = "",
+                        nickname = "",
+                        purpose = "",
                         wakeTime = "07:00",
                         sleepTime = "23:00",
                         preferredStudyHours = "Evenings",
                         preferredSessionDurationMinutes = 45,
                         preferredBreakDurationMinutes = 15,
-                        dailyGoalMinutes = 180,
-                        timeZone = "Asia/Kathmandu",
+                        dailyGoalMinutes = 120,
+                        timeZone = "UTC",
                         hasCompletedOnboarding = false,
-                        currentStreakDays = 1,
-                        lastActiveDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                        currentStreakDays = 0,
+                        lastActiveDate = "",
                         isGuest = true,
                         accountEmail = "",
                         accountName = "",
@@ -108,111 +104,11 @@ abstract class StudyBloomDatabase : RoomDatabase() {
                         isCloudBackupEnabled = false,
                         lastCloudSyncTimestamp = 0L,
                         hasSeenAccountReminder = false,
-                        completedSessionsCount = 1
+                        completedSessionsCount = 0
                     )
                 )
-
-                // Default Availability Slots (Monday to Sunday)
-                val defaultSlots = mutableListOf<AvailabilitySlotEntity>()
-                for (day in 1..5) {
-                    defaultSlots.add(AvailabilitySlotEntity(dayOfWeek = day, startTime = "06:30", endTime = "08:00"))
-                    defaultSlots.add(AvailabilitySlotEntity(dayOfWeek = day, startTime = "19:00", endTime = "22:00"))
-                }
-                for (day in 6..7) {
-                    defaultSlots.add(AvailabilitySlotEntity(dayOfWeek = day, startTime = "09:00", endTime = "12:00"))
-                    defaultSlots.add(AvailabilitySlotEntity(dayOfWeek = day, startTime = "15:00", endTime = "18:00"))
-                }
-                slotsDao.insertSlots(defaultSlots)
-
-                // Initial sample starter material: Django & Python Mastery
-                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                val matId = materialDao.insertMaterial(
-                    LearningMaterialEntity(
-                        title = "Django & Python Web Development",
-                        fileType = "PDF",
-                        uploadDate = today,
-                        fileSizeFormatted = "4.2 MB",
-                        extractedText = "Django Web Framework guide covering models, ORM, views, and templates.",
-                        summary = "Comprehensive technical textbook on building modern backend APIs and database-driven web services.",
-                        mainSubject = "Django Development",
-                        estimatedDifficulty = "MEDIUM",
-                        estimatedTotalHours = 14.5,
-                        status = "READY"
-                    )
-                )
-
-                val initialTopics = listOf(
-                    TopicEntity(materialId = matId, title = "1. Introduction to Django Architecture & MVT", subtopicsRaw = "HTTP flow, urls.py, settings configuration", difficulty = "EASY", estimatedMinutes = 45, isPrerequisite = true, orderIndex = 1, isCompleted = true),
-                    TopicEntity(materialId = matId, title = "2. Models & ORM QuerySets", subtopicsRaw = "Field types, migrations, filtering, foreign keys", difficulty = "HARD", estimatedMinutes = 90, isPrerequisite = true, orderIndex = 2, isCompleted = false),
-                    TopicEntity(materialId = matId, title = "3. Class-Based Views & Templates", subtopicsRaw = "ListView, DetailView, context dictionaries", difficulty = "MEDIUM", estimatedMinutes = 60, isPrerequisite = false, orderIndex = 3, isCompleted = false),
-                    TopicEntity(materialId = matId, title = "4. Forms & User Authentication", subtopicsRaw = "ModelForms, CSRF, LoginView, session management", difficulty = "MEDIUM", estimatedMinutes = 75, isPrerequisite = false, orderIndex = 4, isCompleted = false),
-                    TopicEntity(materialId = matId, title = "5. Django REST Framework & Serializers", subtopicsRaw = "ModelSerializers, ViewSets, API routers", difficulty = "HARD", estimatedMinutes = 90, isPrerequisite = false, orderIndex = 5, isCompleted = false)
-                )
-                topicDao.insertTopics(initialTopics)
-
-                // Today's starter schedule
-                val initialTasks = listOf(
-                    StudyTaskEntity(
-                        title = "Python Functions & Lambda Expressions",
-                        description = "Review functional programming concepts, closures, and type hints",
-                        category = "PROGRAMMING",
-                        subject = "Python Core",
-                        priority = "HIGH",
-                        date = today,
-                        startTime = "07:00",
-                        endTime = "07:45",
-                        durationMinutes = 45,
-                        isCompleted = true,
-                        taskType = "STUDY",
-                        learningObjective = "Master higher-order functions and clean lambda usage",
-                        estimatedDifficulty = "MEDIUM"
-                    ),
-                    StudyTaskEntity(
-                        title = "Django Models & QuerySet Filtering",
-                        description = "Practice complex lookups with Q objects and annotate() aggregations",
-                        category = "CODING_PRACTICE",
-                        subject = "Django Development",
-                        priority = "HIGH",
-                        date = today,
-                        startTime = "19:00",
-                        endTime = "20:00",
-                        durationMinutes = 60,
-                        isCompleted = false,
-                        taskType = "CODING",
-                        learningObjective = "Build optimized ORM queries without N+1 query traps",
-                        estimatedDifficulty = "HARD",
-                        materialId = matId,
-                        topicId = 2
-                    ),
-                    StudyTaskEntity(
-                        title = "Quick Revision: REST API Status Codes",
-                        description = "Review 200 vs 201, 400 vs 422, and idempotency",
-                        category = "REVISION",
-                        subject = "Web Architecture",
-                        priority = "LOW",
-                        date = today,
-                        startTime = "20:15",
-                        endTime = "20:45",
-                        durationMinutes = 30,
-                        isCompleted = false,
-                        taskType = "REVISION",
-                        learningObjective = "Memorize HTTP status best practices",
-                        estimatedDifficulty = "EASY"
-                    )
-                )
-                taskDao.insertTasks(initialTasks)
-
-                // Starter completed study session for today
-                db.studySessionDao().insertSession(
-                    StudySessionEntity(
-                        taskTitle = "Python Functions & Lambda Expressions",
-                        subject = "Python Core",
-                        durationMinutes = 45,
-                        date = today,
-                        completedSuccessfully = true,
-                        sessionType = "POMODORO"
-                    )
-                )
+                // No demo materials, topics, tasks, or study sessions are inserted.
+                // The app starts in a completely clean, pristine state.
             }
         }
     }
