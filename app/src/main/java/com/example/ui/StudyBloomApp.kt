@@ -39,14 +39,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.local.entity.StudyGoalEntity
 import com.example.data.local.entity.UserProfileEntity
 import com.example.ui.components.AccountCreationReminderDialog
 import com.example.ui.components.ActiveTimerPill
+import com.example.ui.components.AddEditGoalDialog
 import com.example.ui.components.AddTaskDialog
 import com.example.ui.components.AiAssistantSheet
 import com.example.ui.components.AuthDialog
 import com.example.ui.components.ConnectionDetailsSheet
+import com.example.ui.components.DeleteGoalConfirmationDialog
 import com.example.ui.components.ExportDialog
+import com.example.ui.components.RescheduleGoalDialog
 import com.example.ui.screens.FocusTimerScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LoginScreen
@@ -73,8 +77,12 @@ fun StudyBloomApp(
     val userProfile by viewModel.userProfile.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
     val todayTasks by viewModel.todayTasks.collectAsState()
+    val allTasks by viewModel.allTasks.collectAsState()
+    val todayGoals by viewModel.todayGoals.collectAsState()
+    val activeGoals by viewModel.activeGoals.collectAsState()
     val selectedPlanDate by viewModel.selectedPlanDate.collectAsState()
     val planDateTasks by viewModel.planDateTasks.collectAsState()
+    val planDateGoals by viewModel.planDateGoals.collectAsState()
     val allMaterials by viewModel.allMaterials.collectAsState()
     val allSessions by viewModel.allSessions.collectAsState()
     val totalMinutesAllTime by viewModel.totalMinutesAllTime.collectAsState()
@@ -112,6 +120,10 @@ fun StudyBloomApp(
     var showWizard by remember { mutableStateOf(false) }
     var showAssistantSheet by remember { mutableStateOf(false) }
     var showAddTaskDialog by remember { mutableStateOf(false) }
+    var showGoalDialog by remember { mutableStateOf(false) }
+    var goalToEdit by remember { mutableStateOf<StudyGoalEntity?>(null) }
+    var goalToDelete by remember { mutableStateOf<StudyGoalEntity?>(null) }
+    var goalToReschedule by remember { mutableStateOf<StudyGoalEntity?>(null) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showConnectionDetailsSheet by remember { mutableStateOf(false) }
     var showAuthDialog by remember { mutableStateOf(openAuthOnStart) }
@@ -220,11 +232,16 @@ fun StudyBloomApp(
             ScheduleWizardScreen(
                 wizardData = wizardData,
                 materials = allMaterials,
+                activeGoals = activeGoals,
                 onStepChange = { viewModel.updateWizardStep(it) },
+                onSetWizardMode = { viewModel.setWizardMode(it) },
+                onToggleGoalSelection = { viewModel.toggleWizardGoalSelection(it) },
+                onSelectAllGoals = { viewModel.selectAllWizardGoals(activeGoals) },
                 onSetSubject = { subj, matId -> viewModel.setWizardSubject(subj, matId) },
                 onSetTarget = { start, end, daily -> viewModel.setWizardTarget(start, end, daily) },
                 onSetSessionSettings = { sess, brk, prio -> viewModel.setWizardSessionSettings(sess, brk, prio) },
                 onGenerate = { viewModel.generateSchedulePreview() },
+                onRedistributeOverflow = { viewModel.redistributeOverflowAcrossDays() },
                 onSaveSchedule = {
                     viewModel.saveGeneratedSchedule()
                     showWizard = false
@@ -338,6 +355,8 @@ fun StudyBloomApp(
                     "home" -> HomeScreen(
                         userProfile = userProfile ?: UserProfileEntity(),
                         todayTasks = todayTasks,
+                        todayGoals = todayGoals,
+                        allTasks = allTasks,
                         networkState = networkState,
                         syncState = syncState,
                         onOpenConnectionDetails = { showConnectionDetailsSheet = true },
@@ -352,17 +371,37 @@ fun StudyBloomApp(
                             viewModel.rescheduleTask(task, date, start, end)
                         },
                         onOpenAddTask = { showAddTaskDialog = true },
-                        onOpenWizard = { showWizard = true },
+                        onOpenWizard = {
+                            viewModel.openMultiGoalWizard(viewModel.todayDate)
+                            showWizard = true
+                        },
                         onOpenAssistant = { showAssistantSheet = true },
                         onOpenFocusTimer = { showFocusTimer = true },
                         onExportPdf = { showExportDialog = true },
-                        onOpenAccountReminder = { viewModel.openAccountReminder() }
+                        onOpenAccountReminder = { viewModel.openAccountReminder() },
+                        onOpenAddGoal = {
+                            goalToEdit = null
+                            showGoalDialog = true
+                        },
+                        onEditGoal = { goal ->
+                            goalToEdit = goal
+                            showGoalDialog = true
+                        },
+                        onToggleGoalComplete = { viewModel.toggleGoalComplete(it) },
+                        onRescheduleGoal = { goalToReschedule = it },
+                        onDeleteGoal = { goalToDelete = it },
+                        onScheduleGoalsWithAi = {
+                            viewModel.openMultiGoalWizard(viewModel.todayDate)
+                            showWizard = true
+                        }
                     )
 
                     "plan" -> MyPlanScreen(
                         selectedDate = selectedPlanDate,
                         onSelectDate = { viewModel.setSelectedPlanDate(it) },
                         dayTasks = planDateTasks,
+                        dayGoals = planDateGoals,
+                        allTasks = allTasks,
                         onToggleComplete = { viewModel.toggleTaskComplete(it) },
                         onStartFocus = { task ->
                             viewModel.startTaskClock(task)
@@ -376,7 +415,25 @@ fun StudyBloomApp(
                         onSmartRescheduleMissed = { viewModel.smartRescheduleMissedTasks() },
                         onExportWeeklyPdf = { showExportDialog = true },
                         onOpenAddTask = { showAddTaskDialog = true },
-                        onOpenWizard = { showWizard = true }
+                        onOpenWizard = {
+                            viewModel.openMultiGoalWizard(selectedPlanDate)
+                            showWizard = true
+                        },
+                        onOpenAddGoal = {
+                            goalToEdit = null
+                            showGoalDialog = true
+                        },
+                        onEditGoal = { goal ->
+                            goalToEdit = goal
+                            showGoalDialog = true
+                        },
+                        onToggleGoalComplete = { viewModel.toggleGoalComplete(it) },
+                        onRescheduleGoal = { goalToReschedule = it },
+                        onDeleteGoal = { goalToDelete = it },
+                        onScheduleGoalsWithAi = {
+                            viewModel.openMultiGoalWizard(selectedPlanDate)
+                            showWizard = true
+                        }
                     )
 
                     "materials" -> MaterialsScreen(
@@ -390,7 +447,7 @@ fun StudyBloomApp(
                         },
                         onDeleteTopic = { viewModel.deleteTopic(it) },
                         onGenerateScheduleFromMaterial = { mat ->
-                            viewModel.setWizardSubject(mat.title, mat.id)
+                            viewModel.openMaterialWizard(mat)
                             showWizard = true
                         }
                     )
@@ -455,6 +512,63 @@ fun StudyBloomApp(
                 onDismiss = { showAddTaskDialog = false },
                 onSaveTask = { title, desc, cat, subj, prio, date, start, dur ->
                     viewModel.addNewTask(title, desc, cat, subj, prio, date, start, dur)
+                }
+            )
+        }
+
+        // Add / Edit Daily Study Goal Dialog
+        if (showGoalDialog) {
+            val defaultDate = if (currentTab == "plan") selectedPlanDate else viewModel.todayDate
+            AddEditGoalDialog(
+                initialDate = defaultDate,
+                goalToEdit = goalToEdit,
+                onDismiss = {
+                    showGoalDialog = false
+                    goalToEdit = null
+                },
+                onSaveGoal = { title, desc, subj, cat, estMins, diff, prio, prefDate, deadline ->
+                    val editing = goalToEdit
+                    if (editing == null) {
+                        viewModel.addGoal(title, desc, subj, cat, estMins, diff, prio, prefDate, deadline)
+                    } else {
+                        viewModel.updateGoal(
+                            editing.copy(
+                                title = title,
+                                description = desc,
+                                subject = subj,
+                                category = cat,
+                                estimatedMinutes = estMins,
+                                difficulty = diff,
+                                priority = prio,
+                                preferredDate = prefDate,
+                                deadlineDate = deadline
+                            )
+                        )
+                    }
+                }
+            )
+        }
+
+        // Delete Goal Confirmation Dialog
+        goalToDelete?.let { targetGoal ->
+            val uncompletedLinked = allTasks.count { it.goalId == targetGoal.id && !it.isCompleted }
+            DeleteGoalConfirmationDialog(
+                goal = targetGoal,
+                linkedUncompletedCount = uncompletedLinked,
+                onDismiss = { goalToDelete = null },
+                onConfirmDelete = { removeUncompleted ->
+                    viewModel.deleteGoal(targetGoal.id, removeUncompleted)
+                }
+            )
+        }
+
+        // Reschedule Goal Dialog
+        goalToReschedule?.let { targetGoal ->
+            RescheduleGoalDialog(
+                goal = targetGoal,
+                onDismiss = { goalToReschedule = null },
+                onConfirmReschedule = { newDate, moveTasks ->
+                    viewModel.rescheduleGoal(targetGoal.id, newDate, moveTasks)
                 }
             )
         }

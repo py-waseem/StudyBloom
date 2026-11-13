@@ -1,155 +1,172 @@
-# 🌸 StudyBloom (v1.0.0)
+# StudyBloom
 
 <p align="center">
-  <img src="app/src/main/res/drawable/img_studybloom_brand.png" alt="StudyBloom Banner" width="600"/>
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_mon.png" alt="StudyBloom App Icon Banner" width="180" />
 </p>
 
 <p align="center">
   <strong>Plan gently. Learn consistently. Grow every day.</strong><br>
-  <em>Let Your Knowledge Bloom.</em>
+  <em>Your learning journey begins here.</em>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Release-v1.0.0-8B70DF?style=for-the-badge&logo=android" alt="Release v1.0.0"/>
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android" alt="Platform Android"/>
-  <img src="https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin" alt="Kotlin"/>
+  <img src="https://img.shields.io/badge/Kotlin-2.2.10-7F52FF?style=for-the-badge&logo=kotlin" alt="Kotlin 2.2.10"/>
   <img src="https://img.shields.io/badge/Jetpack_Compose-Material_3-4285F4?style=for-the-badge&logo=jetpackcompose" alt="Jetpack Compose"/>
-  <img src="https://img.shields.io/badge/Architecture-Offline--First_MVVM-34D399?style=for-the-badge" alt="Architecture"/>
-  <img src="https://img.shields.io/badge/Database-Room_SQLite_v4-FFA000?style=for-the-badge&logo=sqlite" alt="Room SQLite"/>
+  <img src="https://img.shields.io/badge/Architecture-Offline--First_MVVM-34D399?style=for-the-badge" alt="Offline-First MVVM"/>
+  <img src="https://img.shields.io/badge/Database-Room_SQLite_v6-FFA000?style=for-the-badge&logo=sqlite" alt="Room SQLite v6"/>
+  <img src="https://img.shields.io/badge/WorkManager-2.10.0-2E7D4F?style=for-the-badge" alt="WorkManager"/>
 </p>
 
 ---
 
 ## 📖 Overview
 
-**StudyBloom** is a native, offline-capable Android application built with Kotlin and Jetpack Compose designed specifically for programmers, university students, and self-directed learners. 
+**StudyBloom** is a native, offline-capable Android application built with Kotlin and Jetpack Compose for students, programmers, and self-directed learners.
 
-Rather than functioning as a rudimentary to-do checklist, StudyBloom pairs an **intelligent AI study engine** with an **aesthetic task clock & live study timer**, automated scheduling, and a local-first Room database. Learners upload their syllabi, programming textbooks, or documentation, define their daily availability, and receive structured, realistic study blocks tailored to their personal cognitive rhythms.
-
----
-
-## 🌟 What's New in Version 1.0 (v1)
-
-### 🌸 Elegant Wordmark & Adaptive App Icon Branding
-* **Custom Calligraphy Identity:** Deep purple calligraphy lettering with lavender wave accents, an open-book motif, fresh green leaves, and delicate sparkles.
-* **Full Adaptive Icon Layering:** Multi-density launcher mipmaps (`hdpi`, `mdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) with a soft cream (`#FCF6EE`) vector background and 66dp safe-zone foreground artwork.
-* **Integrated In-App Assets:** High-resolution brand hero banners and wordmark drawables featured across Home, Onboarding, and Profile screens.
-
-### 🚀 Welcoming Onboarding & Unrestricted Guest Mode
-* **First-Time Welcome Screen:** Warm greeting (*"Welcome to StudyBloom 🌸 • Your personal space to plan, learn, and grow."*) with zero forced registration.
-* **Instant Guest Mode:** Full access to all study scheduling, document analysis, live study timers, local notifications, and progress tracking with zero account barriers.
-* **Encrypted Local Storage:** All guest data is stored on-device in Room SQLite.
-* **Non-Intrusive Profile Indicator:** Subtle `👤 Guest Account` top-bar badge keeping the UI clean and distraction-free.
-
-### 🌱 Smart Account Creation & 5-Step Verified Migration
-* **Gentle Reminders:** Non-intrusive dialog (*"Your progress is worth protecting! 🌱"*) outlining the benefits of cloud backup, multi-device sync, and device recovery.
-* **Timer Safety Guard:** Never interrupts an active study session or running timer; triggers gently only after a completed session or from the Profile screen.
-* **Verifiable Data Migration Pipeline:**
-  1. *Confirm Local Data:* Audits and counts local Room entities (tasks, sessions, materials, topics).
-  2. *Verify Credentials:* Validates email format and password strength while checking network connectivity.
-  3. *Encrypted Cloud Upload:* Safely transfers existing records with live progress reporting.
-  4. *Parity Verification:* Verifies 100% parity between uploaded records and local database entries.
-  5. *Mark Registered:* Activates cloud backup flags and sync timestamps without duplicating data.
-* **Zero Data Loss Guarantee:** If network disconnects during migration, local data is left completely intact for safe retry.
-
-### ⏱️ Aesthetic Task Clock & Persistent Live Timer
-* **Circular Analog Design:** Large, elegant circular clock face with a moving clock hand, smooth circular progress ring, and pastel lavender glowing accents.
-* **Task Schedule Connected:** Directly linked to scheduled tasks; calculates actual start times, elapsed focus time, overtime, and pause durations.
-* **Background & Navigation Resilience:** Powered by `TaskTimerManager`; active sessions persist when navigating between tabs, switching apps, or reopening the app.
-* **Persistent Bottom Banner:** Interactive `ActiveTimerPill` floating above the navigation bar allowing 1-tap pause/resume and quick clock view.
-
-### 🌐 Online-Enabled, Offline-Capable Architecture
-* **Real-Time Connectivity Monitor:** Detects Wi-Fi, Cellular, and Offline modes instantly.
-* **Offline AI Request Queue:** AI document analysis and scheduling requests initiated offline are queued in Room (`PendingAiRequestEntity`) and automatically processed upon reconnect.
-* **Visual Status Pill:** Top-bar pill displaying connection status (`Online • Wi-Fi`, `Offline Mode Active`, or `Syncing...`) with tap-to-inspect guarantees.
+StudyBloom pairs an **intelligent AI study engine** with **Multiple Daily Study Goals**, an **aesthetic task clock & live study timer**, automated multi-day scheduling, a **dynamic weekday launcher icon**, and a local-first Room SQLite database (v6). Learners can start immediately in Guest Mode with zero forced registration, add their own daily study goals or upload learning materials, build realistic study blocks, and track genuine focus time across sessions.
 
 ---
 
-## 📱 Key Features
+## 🌟 What's New
+
+### 📆 Dynamic Weekday Launcher Icon (`MON` – `SUN`)
+* **Minimal Branded Icon Design:** Warm cream (`#F8F3E1`) rounded-square & circular adaptive icon with a horizontal two-tone progress bar (`#2E7D4F` green left / `#9B7FC9` soft purple right) and bold deep-plum weekday abbreviation (`#1E1633`).
+* **Seven Automatic Daily Variations:** Automatically displays `MON`, `TUE`, `WED`, `THU`, `FRI`, `SAT`, or `SUN` based on the device's current local date and timezone:
+  <p align="center">
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_mon.png" alt="MON Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_tue.png" alt="TUE Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_wed.png" alt="WED Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_thu.png" alt="THU Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_fri.png" alt="FRI Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_sat.png" alt="SAT Icon" width="68" />
+    <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_sun.png" alt="SUN Icon" width="68" />
+  </p>
+* **Safe `<activity-alias>` Switching:** Powered by `WeekdayIconManager` using 7 manifest `<activity-alias>` entries pointing to `.MainActivity`. Enables the target weekday alias first (`PackageManager.DONT_KILL_APP`) before disabling the others—guaranteeing a single launcher icon with zero duplicate shortcuts and preserving all notification and deep-link launches.
+* **Background & System Sync Resilience:** Synchronized on cold launch and foreground return (`StudyBloomApplication` + `ProcessLifecycleOwner` and `MainActivity.onResume`), via **WorkManager** (`WeekdayIconWorker` running 6-hour periodic checks plus computed next-midnight checks), and via `WeekdayChangeReceiver` on `BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`, `DATE_CHANGED`, and `MY_PACKAGE_REPLACED`.
+
+### 🎯 Multiple Daily Study Goals & Multi-Goal Scheduling
+* **Dedicated Goal Management (`StudyGoalEntity`):** Create, edit, reschedule, complete, and delete multiple daily study goals with subject, category, priority (`HIGH`, `MEDIUM`, `LOW`), difficulty (`EASY`, `MEDIUM`, `HARD`), estimated target minutes, preferred date, and optional deadlines.
+* **Multi-Goal Schedule Wizard:** Select one or more active goals in `ScheduleWizardScreen`, automatically split or pack blocks into available daily study capacity, and redistribute overflow sessions across upcoming days.
+* **Accurate Transactional Progress Tracking:** Timer and focus sessions record a unique `sessionSubmissionKey` to prevent duplicate submissions and double-counting while atomically updating `actualMinutes` on linked goals.
+* **Isolated Data Ownership & Migration:** Every study goal belongs to its owner (`guest` or `user:<email>`), preserves isolation between sessions, transfers cleanly during guest-to-account migration, and syncs via `SyncManager`.
+* **Non-Destructive Room v6 Migration:** Full migration path (`MIGRATION_1_2` through `MIGRATION_5_6`) preserves all existing user tasks (with `goalId = NULL`), study sessions, materials, and profile preferences.
+
+### ✨ Redesigned Login / Welcome Screen
+* **Clean Split-Canvas Aesthetic:** Warm cream (`#F8F3E1`) upper canvas with centered `StudyBloom` branding transitioning cleanly at the secondary pill button to a pure white (`#FFFFFF`) lower card area.
+* **Clear Three-Option Entry Flow:**
+  * **Continue as Guest** (`#2E7D4F`) — initializes a valid guest session with full access to guest-supported features.
+  * **Create an Account** (`#9B7FC9`) — opens registration and the 5-step verified migration flow.
+  * **Already have an account? Sign In** (`#F0F0F0` rounded card) — opens the sign-in flow for returning users.
+
+### 🧹 Clean Slate — Zero Demo or Placeholder Data
+* **Real User Data Only:** Removed all pre-populated demo accounts, sample tasks, mock schedules, fake subjects, sample study documents, and artificial timer histories.
+* **Guided Empty States:** Fresh installations begin with a clean local profile (`StudyBloomDatabase` clean initial callback) and helpful empty states prompting users to create real goals, tasks, and materials.
+
+### 🛠️ Profile & Study Focus + Session Reminder UI Fixes
+* **Responsive Daily Study Target Selector:** Fixed alignment, vertical spacing, horizontal padding, and wrapping for the hour-selection boxes in **Profile & Study Focus** so every chip stays cleanly inside screen bounds across small and large Android displays.
+* **Polished Session Reminder Layout:** Fixed label overlap, control alignment, switches, time selectors, and minimum 48dp accessible touch targets across the **Reminders & Notifications** section while preserving all existing reminder preferences and scheduling logic.
+
+---
+
+## 📱 Core Features
 
 | Feature | Description |
 |---|---|
-| **📚 AI Material Breakdown** | Upload textbooks, code snippets, or notes (PDF, TXT, Code). AI extracts modules, difficulty ratings (EASY, MEDIUM, HARD), prerequisite sequences, and time estimates. |
-| **📅 Intelligent Schedule Wizard** | Multi-step planner that builds realistic daily blocks around your wake/sleep times, peak focus hours, and pomodoro breaks without double-booking. |
-| **⏱️ Aesthetic Task Clock** | Circular analog study clock with live elapsed/remaining countdowns, overtime tracking, and completion logging. |
-| **🤖 Contextual AI Assistant** | In-app study mentor sheet for real-time advice, debugging help, and gentle schedule adjustments. |
-| **📈 Progress & Analytics** | Daily and weekly focus hour charts, completion rates, study streak tracking, and session histories. |
-| **📄 PDF & CSV Schedule Export** | Generates beautifully styled printable daily/weekly schedule PDFs and CSV files for external calendars. |
-| **🔔 Gentle Notifications** | Android notification system with dedicated channels for session reminders and completion alerts. |
+| **🎯 Multiple Daily Study Goals** | Create and track multiple daily goals with estimated vs. actual minutes, status badges (`Unscheduled`, `Partial`, `Scheduled`, `Completed`), and date rescheduling. |
+| **📚 AI Material Breakdown** | Upload textbooks, notes, or code snippets (PDF, TXT, Code). AI extracts modules, difficulty levels, prerequisites, and time estimates. |
+| **📅 Intelligent Schedule Wizard** | Multi-step planner supporting both subject-based and multi-goal scheduling around wake/sleep times, peak focus hours, and breaks without double-booking. |
+| **⏱️ Aesthetic Task Clock & Focus Timer** | Circular analog study clock with live elapsed/remaining countdowns, overtime tracking, persistent `ActiveTimerPill`, and quick Pomodoro focus mode. |
+| **📆 Dynamic Weekday App Icon** | Launcher icon automatically updates to show the current local weekday (`MON`–`SUN`) across foreground switches, midnight rollovers, reboots, and timezone changes. |
+| **🤖 Contextual AI Assistant** | In-app study mentor sheet for real-time advice, concept breakdowns, and schedule adjustments. |
+| **📈 Progress & Analytics** | Daily and weekly focus charts, completion metrics, study streak tracking, and authentic session histories. |
+| **📄 PDF & CSV Schedule Export** | Exports printable daily/weekly study schedules to PDF (`PdfDocument`) and CSV files. |
+| **🔔 Reminders & Notifications** | Configurable pre-session reminders, daily planning prompts, evening summaries, and active task clock notifications. |
+| **🌐 Offline-First Sync & Guest Migration** | Real-time connectivity monitoring (`Online`, `Offline Mode`, `Syncing...`), queued offline AI requests (`PendingAiRequestEntity`), and 5-step verified Guest-to-Account cloud migration. |
 
 ---
 
 ## 🛠️ Technical Architecture & Stack
 
-StudyBloom is built with modern, idiomatic Android practices following Clean Architecture and MVVM.
+StudyBloom follows **Clean Architecture** and **MVVM** with Jetpack Compose and an offline-first Room repository layer:
 
 ```text
 app/src/main/java/com/example/
-├── MainActivity.kt                     # Single activity entry point with edge-to-edge support
+├── MainActivity.kt                      # Edge-to-edge entry point & resume weekday icon sync
+├── StudyBloomApplication.kt             # ProcessLifecycleOwner observer & WorkManager setup
+├── icon/
+│   ├── WeekdayIconManager.kt            # Weekday resolution & safe activity-alias switching
+│   ├── WeekdayIconWorker.kt             # 6h periodic + next-midnight WorkManager scheduler
+│   └── WeekdayChangeReceiver.kt         # Boot, time, timezone, date & package-replaced receiver
 ├── ui/
-│   ├── StudyBloomApp.kt               # Central navigation scaffold, tabs, and sheet controllers
-│   ├── theme/                         # Material 3 colors (Lavender, Mint, Pink, Cream), Type, Shape
+│   ├── StudyBloomApp.kt                 # Central navigation scaffold, dialogs & sheet controllers
+│   ├── theme/                           # Material 3 colors, typography & shapes
 │   ├── screens/
-│   │   ├── HomeScreen.kt              # Daily schedule, streak pill, connection status, quick actions
-│   │   ├── TaskClockScreen.kt         # Fullscreen aesthetic analog circular timer
-│   │   ├── MyPlanScreen.kt            # Calendar-based daily & weekly planner
-│   │   ├── MaterialsScreen.kt         # Study documents, topic breakdown & AI extraction
-│   │   ├── ProgressScreen.kt          # Focus charts, streak statistics & session history
-│   │   ├── ProfileScreen.kt           # Account status, cloud backup, theme & reminder settings
-│   │   ├── OnboardingScreen.kt        # Welcome screen, Guest Mode entry & personalization
-│   │   ├── ScheduleWizardScreen.kt    # Step-by-step AI schedule generator
-│   │   └── FocusTimerScreen.kt        # Quick Pomodoro focus tool
-│   ├── components/                    # Reusable M3 cards, badges, dialogs, sheets
-│   │   ├── AuthDialog.kt              # Account registration & sign-in modal
-│   │   ├── AccountCreationReminderDialog.kt # Gentle progress protection reminder
-│   │   ├── ActiveTimerPill.kt         # Persistent timer indicator pill above navigation
-│   │   ├── ConnectionStatusPill.kt    # Real-time online/offline network indicator
-│   │   └── AiAssistantSheet.kt        # Interactive AI study assistant modal
+│   │   ├── LoginScreen.kt               # Redesigned split-canvas Welcome / Auth entry screen
+│   │   ├── HomeScreen.kt                # Today's goals, tasks, streak pill & quick actions
+│   │   ├── TaskClockScreen.kt           # Fullscreen aesthetic circular timer
+│   │   ├── FocusTimerScreen.kt          # Quick Pomodoro focus timer
+│   │   ├── MyPlanScreen.kt              # Calendar-based daily/weekly tasks & goals planner
+│   │   ├── ScheduleWizardScreen.kt      # Multi-goal & AI schedule generator with overflow split
+│   │   ├── MaterialsScreen.kt           # Study documents, topic breakdown & AI extraction
+│   │   ├── ProgressScreen.kt            # Focus charts, streak statistics & session history
+│   │   ├── ProfileScreen.kt             # Study Focus targets, Session Reminders, sync & account
+│   │   └── OnboardingScreen.kt          # Personalization preferences
+│   ├── components/
+│   │   ├── GoalComponents.kt            # DailyGoalCard, Add/Edit, Reschedule & Delete dialogs
+│   │   ├── AuthDialog.kt                # Account registration & sign-in modal
+│   │   ├── AccountCreationReminderDialog.kt # Non-intrusive progress protection prompt
+│   │   ├── ActiveTimerPill.kt           # Persistent live timer pill above bottom navigation
+│   │   ├── ConnectionStatusIndicator.kt # Real-time online/offline network status & sheet
+│   │   ├── AiAssistantSheet.kt          # Interactive AI study assistant modal
+│   │   ├── AddTaskDialog.kt             # Manual task creation & goal linking
+│   │   └── ExportDialog.kt              # PDF / CSV schedule export modal
 │   └── viewmodel/
-│       └── StudyBloomViewModel.kt     # Single source of truth for UI state & coroutine operations
+│       └── StudyBloomViewModel.kt       # Centralized StateFlow UI state & coroutine actions
 ├── data/
-│   ├── local/                         # Room Database (v4)
-│   │   ├── StudyBloomDatabase.kt      # Database builder, seed callback, migrations
-│   │   ├── dao/                       # DAOs for Tasks, Sessions, Materials, Topics, Profile, AI Queue
-│   │   └── entity/                    # Room entities with indexes and relations
+│   ├── local/                           # Room Database (v6, non-destructive migrations v1→v6)
+│   │   ├── StudyBloomDatabase.kt
+│   │   ├── dao/                         # DAOs for Goals, Tasks, Sessions, Materials, Topics, Profile, AI Queue
+│   │   └── entity/                      # Room entities including StudyGoalEntity & GoalOwnership
 │   ├── auth/
-│   │   └── AuthManager.kt             # Guest-to-Account verified migration engine
+│   │   └── AuthManager.kt               # Guest-to-Account 5-step verified migration engine
 │   ├── ai/
-│   │   ├── AiRepository.kt            # Gemini API & offline fallback engine
-│   │   └── AiRepositoryImpl.kt        # Document analysis & schedule generation algorithms
+│   │   ├── AiRepository.kt              # AI interface
+│   │   └── AiRepositoryImpl.kt          # Firebase AI Logic / Gemini & offline queue fallback
 │   ├── sync/
-│   │   └── SyncManager.kt             # Cloud sync orchestrator & offline queue processor
+│   │   └── SyncManager.kt               # Cloud sync orchestrator, goal ownership & AI queue processor
 │   └── repository/
-│       └── StudyBloomRepository.kt    # Unified data repository
+│       └── StudyBloomRepository.kt      # Unified offline-first repository & transactional logging
 └── util/
-    ├── NetworkConnectivityMonitor.kt  # StateFlow-based network callback listener
-    ├── TaskTimerManager.kt            # Timestamp-based resilient study clock manager
-    ├── NotificationHelper.kt          # Notification channels & reminder triggers
-    └── PdfExporter.kt                 # Native Android PdfDocument generation
+    ├── NetworkConnectivityMonitor.kt    # ConnectivityManager callback & active network checks
+    ├── TaskTimerManager.kt              # Timestamp-based resilient study clock manager
+    ├── NotificationHelper.kt            # Notification channels, reminders & clock notifications
+    └── PdfExporter.kt                   # Native Android PdfDocument & CSV generation
 ```
 
 ### Technology Matrix
 
-* **Language:** Kotlin 2.0.21
-* **UI Toolkit:** Jetpack Compose (1.7.5) with Material 3 (1.3.1)
-* **Local Persistence:** Room Database 2.6.1 with KSP (Kotlin Symbol Processing)
-* **Asynchronous Flow:** Kotlin Coroutines & `StateFlow`
-* **Architecture:** MVVM (Model-View-ViewModel) + Repository Pattern
+* **Language:** Kotlin 2.2.10
+* **UI Toolkit:** Jetpack Compose (BOM `2024.09.00`) with Material 3
+* **Navigation:** Jetpack Navigation Compose (`2.8.9`)
+* **Local Persistence:** Room Database `2.7.0` (Schema **v6** with `MIGRATION_1_2`..`MIGRATION_5_6`) + DataStore Preferences (`1.1.7`)
+* **Background Work:** AndroidX WorkManager `2.10.0` + Lifecycle Process `2.8.7`
+* **Asynchronous Flow:** Kotlin Coroutines `1.10.2` & `StateFlow`
+* **Networking & Serialization:** Retrofit `2.12.0`, OkHttp `4.10.0`, Moshi `1.15.2` (KSP codegen)
+* **AI Capabilities:** Firebase AI Logic (`firebase-bom:34.17.0`) + App Check
 * **Document Export:** Native Android `android.graphics.pdf.PdfDocument`
-* **Network Sensing:** Android `ConnectivityManager.NetworkCallback`
-* **AI Capabilities:** Google Gemini AI Model Integration (with structured JSON generation)
-* **Testing:** JUnit 4 + Robolectric unit testing suite (all tests passing)
+* **Testing:** JUnit 4, Robolectric `4.16.1`, AndroidX WorkManager Testing (`2.10.0`), Compose UI Test (`ui-test-junit4`)
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-* **Android Studio:** Ladybug (2024.2.1) or newer
-* **Android SDK:** Compile SDK 35, Minimum SDK 26 (Android 8.0 Oreo)
-* **JDK:** Java 17 or Java 21
+* **Android Studio:** Ladybug / Meerkat or newer
+* **Android SDK:** Compile SDK 36, Target SDK 36, Minimum SDK 24 (Android 7.0 Nougat)
+* **JDK:** Java 11+ (Java 17 recommended)
 
-### Building from Source
+### Building & Testing
 
 1. **Clone the repository:**
    ```bash
@@ -157,48 +174,36 @@ app/src/main/java/com/example/
    cd StudyBloom
    ```
 
-2. **Open in Android Studio:**
-   Select **File > Open** and choose the `StudyBloom` project directory.
+2. **Environment Secrets (Optional):**
+   Manage API keys via the AI Studio Secrets panel or `.env` (see `.env.example`). Never commit `.env` or hardcode secrets.
 
-3. **Configure Environment Secrets (Optional):**
-   If integrating your personal Google Gemini API key for server-side AI processing, copy `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-   Add your Gemini API key in the Secrets configuration or `.env`:
-   ```env
-   GEMINI_API_KEY=your_actual_gemini_api_key_here
-   ```
-
-4. **Build and Run:**
-   * Select your connected physical device or Android Virtual Device (AVD).
-   * Click **Run** (`Shift + F10`) or execute via Gradle:
+3. **Build Debug APK:**
    ```bash
    gradle assembleDebug
    ```
 
-5. **Run Unit Tests:**
+4. **Run Unit & Robolectric Tests:**
    ```bash
    gradle :app:testDebugUnitTest
    ```
+   Verified test suites include:
+   * `DynamicWeekdayIconTest` — All 7 weekday aliases (`MON`–`SUN`), month/year/leap-year boundaries, timezone crossings, system broadcasts, WorkManager execution, icon resources, and `MainActivity` launch.
+   * `DatabaseMigrationTest` — Room schema v5 → v6 and legacy upgrade safety.
+   * `GoalRepositoryAndProgressTest` — Transactional progress logging, duplicate submission prevention, and goal ownership isolation.
+   * `MultiGoalSchedulerTest` — Multi-goal scheduling and overflow redistribution.
+   * `GoalUiTest` & `ProfileReminderUiTest` — Compose UI interactions for daily goals, Daily Study Target chips, and Session Reminders.
+   * `Stage5IntegrationAndSyncTest` & `ExampleUnitTest` — Guest-to-account migration, connectivity handling, and cloud sync.
 
 ---
 
 ## 🔒 Privacy, Security & Data Ownership
 
-* **Local-First Privacy:** All tasks, uploaded learning materials, topic notes, and focus logs are stored locally on your device in an encrypted Room SQLite database.
-* **No Forced Cloud Lock-in:** Guest Mode allows unrestricted daily use without transmitting personal credentials.
-* **Transparent Sync:** Users have complete control over cloud backups and can manually sync or sign out at any time.
+* **Local-First Privacy:** Goals, tasks, learning materials, topic notes, and focus sessions are stored locally on-device in Room SQLite with zero pre-loaded mock or demo entries.
+* **No Forced Cloud Lock-In:** Guest Mode provides full local study planning, timers, and goal tracking without requiring an account.
+* **Ownership Isolation & Safe Migration:** Guest and registered user data remain isolated by owner ID, and guest-to-account upgrades preserve and verify all local goals, tasks, sessions, and materials.
 
 ---
 
 ## 📄 License
 
 StudyBloom is open-source software licensed under the [Apache License, Version 2.0](LICENSE).
-
----
-
-<p align="center">
-  <strong>StudyBloom v1.0.0</strong><br>
-  <em>Designed and engineered with care for students and developers worldwide. 🌸</em>
-</p>

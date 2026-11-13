@@ -72,7 +72,7 @@ class SyncManager(
     }
 
     suspend fun performSync(isManual: Boolean = true): SyncResult {
-        val isConnected = networkMonitor.networkState.value.isConnected
+        val isConnected = networkMonitor.refresh().isConnected
         if (!isConnected) {
             _syncState.value = _syncState.value.copy(
                 isSyncing = false,
@@ -130,16 +130,24 @@ class SyncManager(
                 }
             }
 
-            // Simulate cloud sync of local Room entities (tasks, sessions, materials)
+            // Sync current owner's study goals while preserving ownerId isolation
+            val syncedGoalsCount = repository.syncGoalsForCurrentOwner()
+
+            // Simulate cloud sync of local Room entities (goals, tasks, sessions, materials)
             delay(800) // Brief graceful sync latency
 
             val now = System.currentTimeMillis()
             prefs.edit().putLong("last_sync_time", now).apply()
 
-            val msg = if (processedCount > 0) {
-                "Synced $processedCount pending AI requests and local schedules with cloud"
-            } else {
-                "StudyBloom is up to date • Local Room & cloud in sync"
+            val msg = when {
+                processedCount > 0 && syncedGoalsCount > 0 ->
+                    "Synced $processedCount AI requests, $syncedGoalsCount goals & local schedules with cloud"
+                processedCount > 0 ->
+                    "Synced $processedCount pending AI requests and local schedules with cloud"
+                syncedGoalsCount > 0 ->
+                    "Synced $syncedGoalsCount study goals and local schedules with cloud"
+                else ->
+                    "StudyBloom is up to date • Local Room & cloud in sync"
             }
 
             _syncState.value = _syncState.value.copy(

@@ -274,7 +274,8 @@ fun AuthDialog(
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        text = "• Tasks Preserved: ${migrationState.dataCounts.tasksCount}\n" +
+                                        text = "• Study Goals Preserved: ${migrationState.dataCounts.goalsCount}\n" +
+                                                "• Tasks Preserved: ${migrationState.dataCounts.tasksCount}\n" +
                                                 "• Focus Sessions Logged: ${migrationState.dataCounts.sessionsCount}\n" +
                                                 "• Study Materials & Topics: ${migrationState.dataCounts.materialsCount} docs, ${migrationState.dataCounts.topicsCount} topics",
                                         fontSize = 12.sp,

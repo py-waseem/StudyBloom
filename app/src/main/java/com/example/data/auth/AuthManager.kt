@@ -1,6 +1,7 @@
 package com.example.data.auth
 
 import android.content.Context
+import com.example.data.local.entity.GoalOwnership
 import com.example.data.local.entity.UserProfileEntity
 import com.example.data.repository.LocalDataCounts
 import com.example.data.repository.StudyBloomRepository
@@ -86,7 +87,7 @@ class AuthManager(
                 statusMessage = "1/5: Scanning & preserving local study data..."
             )
             delay(350)
-            val localSummary = repository.getLocalDataSummary()
+            val localSummary = repository.getLocalDataSummary(GoalOwnership.GUEST_OWNER_ID)
             _migrationState.value = _migrationState.value.copy(dataCounts = localSummary)
 
             // STEP 2: Verify account creation & network requirement
@@ -109,12 +110,12 @@ class AuthManager(
                 return Result.failure(IllegalStateException(err))
             }
 
-            // STEP 3: Upload existing records to the cloud
+            // STEP 3: Upload existing records to the cloud (preserving goal ownership)
             _migrationState.value = MigrationState(
                 step = MigrationStep.UPLOADING_RECORDS,
                 stepIndex = 3,
                 progressPercent = 0.65f,
-                statusMessage = "3/5: Encrypting & syncing ${localSummary.tasksCount} tasks, ${localSummary.sessionsCount} sessions, ${localSummary.materialsCount} materials...",
+                statusMessage = "3/5: Encrypting & syncing ${localSummary.goalsCount} goals, ${localSummary.tasksCount} tasks, ${localSummary.sessionsCount} sessions, ${localSummary.materialsCount} materials...",
                 dataCounts = localSummary
             )
             delay(500)
@@ -129,7 +130,8 @@ class AuthManager(
             )
             delay(400)
 
-            // STEP 5: Mark account as registered and cloud-synced
+            // STEP 5: Reassign guest goals to the newly created account & mark registered
+            repository.migrateGuestGoalsToAccount(trimmedEmail)
             val currentProfile = repository.getProfileOnce()
             val updatedProfile = currentProfile.copy(
                 name = trimmedName.ifBlank { currentProfile.name },

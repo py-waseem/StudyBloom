@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.ButtonDefaults
@@ -38,8 +39,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.local.entity.StudyGoalEntity
 import com.example.data.local.entity.StudyTaskEntity
 import com.example.ui.components.BloomCard
+import com.example.ui.components.DailyGoalCard
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.LavenderLight
 import com.example.ui.theme.LavenderPrimary
@@ -65,6 +68,8 @@ fun MyPlanScreen(
     selectedDate: String,
     onSelectDate: (String) -> Unit,
     dayTasks: List<StudyTaskEntity>,
+    dayGoals: List<StudyGoalEntity> = emptyList(),
+    allTasks: List<StudyTaskEntity> = emptyList(),
     onToggleComplete: (StudyTaskEntity) -> Unit,
     onStartFocus: (StudyTaskEntity) -> Unit,
     onSkipTask: (StudyTaskEntity) -> Unit,
@@ -73,7 +78,13 @@ fun MyPlanScreen(
     onSmartRescheduleMissed: () -> Unit,
     onExportWeeklyPdf: () -> Unit,
     onOpenAddTask: () -> Unit,
-    onOpenWizard: () -> Unit
+    onOpenWizard: () -> Unit,
+    onOpenAddGoal: () -> Unit = {},
+    onEditGoal: (StudyGoalEntity) -> Unit = {},
+    onToggleGoalComplete: (StudyGoalEntity) -> Unit = {},
+    onRescheduleGoal: (StudyGoalEntity) -> Unit = {},
+    onDeleteGoal: (StudyGoalEntity) -> Unit = {},
+    onScheduleGoalsWithAi: () -> Unit = onOpenWizard
 ) {
     val weekDays = remember {
         val list = mutableListOf<DayTabItem>()
@@ -107,7 +118,8 @@ fun MyPlanScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag("my_plan_list"),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
@@ -232,6 +244,78 @@ fun MyPlanScreen(
             }
         }
 
+        // Daily Study Goals Section
+        item {
+            SectionHeader(
+                title = "Study Goals for $selectedDate",
+                subtitle = "${dayGoals.size}"
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (dayGoals.any { !it.isCompleted }) {
+                        OutlinedButton(
+                            onClick = onScheduleGoalsWithAi,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.testTag("plan_schedule_goals_button")
+                        ) {
+                            Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(14.dp), tint = LavenderPrimary)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "AI Plan", fontSize = 11.sp, color = LavenderPrimary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    OutlinedButton(
+                        onClick = onOpenAddGoal,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.testTag("plan_add_goal_button")
+                    ) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Add Goal", fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
+        if (dayGoals.isEmpty()) {
+            item {
+                BloomCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = MaterialTheme.colorScheme.surface
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "🎯", fontSize = 24.sp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "No daily study goals for this date", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                            Text(
+                                text = "Add multiple goals (e.g., Python, Coding Practice, DBMS) and balance them together.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            items(dayGoals, key = { "goal_${it.id}" }) { goal ->
+                val linkedTasks = remember(allTasks, dayTasks, goal.id) {
+                    (allTasks.ifEmpty { dayTasks }).filter { it.goalId == goal.id }
+                }
+                DailyGoalCard(
+                    goal = goal,
+                    linkedTasks = linkedTasks,
+                    onToggleComplete = { onToggleGoalComplete(goal) },
+                    onEdit = { onEditGoal(goal) },
+                    onReschedule = { onRescheduleGoal(goal) },
+                    onDelete = { onDeleteGoal(goal) }
+                )
+            }
+        }
+
         // Section Title
         item {
             SectionHeader(
@@ -264,9 +348,9 @@ fun MyPlanScreen(
                     ) {
                         Text(text = "🍃", fontSize = 36.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "No sessions planned for this date", fontWeight = FontWeight.Bold)
+                        Text(text = "Your study schedule will appear here.", fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Use the AI Schedule Wizard to generate a balanced multi-day plan or add custom tasks.",
+                            text = "No sessions planned for this date. Use the AI Schedule Wizard or add a task.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

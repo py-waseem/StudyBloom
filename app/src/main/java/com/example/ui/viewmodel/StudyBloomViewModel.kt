@@ -5,10 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.ai.AiRepositoryImpl
 import com.example.data.ai.AssistantContext
+import com.example.data.ai.MultiGoalScheduleRequest
+import com.example.data.ai.MultiGoalScheduleResult
 import com.example.data.ai.ScheduleRequest
 import com.example.data.local.StudyBloomDatabase
 import com.example.data.local.entity.AvailabilitySlotEntity
 import com.example.data.local.entity.LearningMaterialEntity
+import com.example.data.local.entity.StudyGoalEntity
 import com.example.data.local.entity.StudySessionEntity
 import com.example.data.local.entity.StudyTaskEntity
 import com.example.data.local.entity.TopicEntity
@@ -22,12 +25,14 @@ import com.example.util.NetworkConnectivityMonitor
 import com.example.util.NetworkState
 import com.example.util.NotificationHelper
 import com.example.util.PdfExporter
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -44,16 +49,19 @@ data class AssistantMessage(
 
 data class ScheduleWizardData(
     val step: Int = 1,
-    val subject: String = "Django Development",
+    val wizardMode: String = "GOALS", // "GOALS" or "MATERIAL"
+    val selectedGoalIds: Set<Long> = emptySet(),
+    val subject: String = "",
     val selectedMaterialId: Long? = null,
     val selectedTopics: List<TopicEntity> = emptyList(),
     val startDate: String = "",
     val targetEndDate: String = "",
-    val dailyMinutesTarget: Int = 120,
+    val dailyMinutesTarget: Int = 180,
     val sessionDuration: Int = 45,
     val breakDuration: Int = 15,
     val priority: String = "HIGH",
     val generatedPreview: List<StudyTaskEntity> = emptyList(),
+    val multiGoalResult: MultiGoalScheduleResult? = null,
     val isGenerating: Boolean = false,
     val errorMessage: String? = null
 )
@@ -110,6 +118,25 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     // Tasks for today
     val todayTasks: StateFlow<List<StudyTaskEntity>> = repository.getTasksForDate(todayDate)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // All tasks (used to derive goal scheduled/unscheduled state & planned minutes)
+    val allTasks: StateFlow<List<StudyTaskEntity>> = repository.allTasks
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Study Goals (owner-isolated for current guest or registered user)
+    val allGoals: StateFlow<List<StudyGoalEntity>> = repository.allGoals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val activeGoals: StateFlow<List<StudyGoalEntity>> = repository.activeGoals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val planDateGoals: StateFlow<List<StudyGoalEntity>> = _selectedPlanDate
+        .flatMapLatest { date -> repository.getGoalsForDate(date) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val todayGoals: StateFlow<List<StudyGoalEntity>> = repository.getGoalsForDate(todayDate)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // All materials
@@ -206,6 +233,73 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     fun clearUserMessage() {
         _userMessage.value = null
+    }
+
+    // --- Study Goals Actions ---
+    fun addGoal(
+        title: String,
+        description: String,
+        subject: String,
+        category: String,
+        estimatedMinutes: Int,
+        difficulty: String,
+        priority: String,
+        preferredDate: String,
+        deadlineDate: String
+    ) {
+        if (title.isBlank()) return
+        viewModelScope.launch {
+            repository.createGoal(
+                title = title,
+                description = description,
+                subject = subject,
+                category = category,
+                estimatedMinutes = estimatedMinutes,
+                difficulty = difficulty,
+                priority = priority,
+                preferredDate = preferredDate.ifBlank { todayDate },
+                deadlineDate = deadlineDate
+            )
+            _userMessage.value = "Goal '$title' added! 🌸"
+        }
+    }
+
+    fun updateGoal(goal: StudyGoalEntity) {
+        viewModelScope.launch {
+            if (repository.updateGoal(goal)) {
+                _userMessage.value = "Goal '${goal.title}' updated!"
+            }
+        }
+    }
+
+    fun toggleGoalComplete(goal: StudyGoalEntity) {
+        viewModelScope.launch {
+            val newCompleted = !goal.isCompleted
+            repository.setGoalCompleted(goal.id, newCompleted)
+            if (newCompleted) {
+                _userMessage.value = "Goal '${goal.title}' completed! 🌟"
+            }
+        }
+    }
+
+    fun rescheduleGoal(goalId: Long, newPreferredDate: String, moveUncompletedTasks: Boolean = true) {
+        viewModelScope.launch {
+            if (repository.rescheduleGoal(goalId, newPreferredDate, moveUncompletedTasks)) {
+                _userMessage.value = "Goal rescheduled to $newPreferredDate."
+            }
+        }
+    }
+
+    fun deleteGoal(goalId: Long, removeUncompletedTasks: Boolean = false) {
+        viewModelScope.launch {
+            if (repository.deleteGoal(goalId, removeUncompletedTasks)) {
+                _userMessage.value = if (removeUncompletedTasks) {
+                    "Goal and its uncompleted sessions removed. Timer history preserved."
+                } else {
+                    "Goal removed. Scheduled sessions & timer history preserved."
+                }
+            }
+        }
     }
 
     // --- Task Actions ---
@@ -396,17 +490,19 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
         val minutesSpent = (_focusTotalSeconds.value - _focusRemainingSeconds.value) / 60
         val actualMinutes = if (minutesSpent > 0) minutesSpent else _focusTotalSeconds.value / 60
         val task = _focusCurrentTask.value
+        val sessionTimestamp = System.currentTimeMillis()
+        val submissionKey = "POMODORO:${task?.id ?: 0L}:$sessionTimestamp"
 
         viewModelScope.launch {
+            // Single transactional write updates session, task, and linked goal without double-counting
             repository.recordFocusSession(
                 taskId = task?.id,
                 taskTitle = task?.title ?: "Focus Session",
                 subject = task?.subject ?: "General Study",
-                durationMinutes = actualMinutes
+                durationMinutes = actualMinutes,
+                markTaskCompleted = task != null,
+                submissionKey = submissionKey
             )
-            if (task != null) {
-                repository.setTaskCompleted(task.id, true)
-            }
             NotificationHelper.showFocusCompleteNotification(
                 getApplication(),
                 task?.title ?: "Focus Session",
@@ -438,8 +534,9 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     fun finishTaskClock() {
         val result = taskTimerManager.finishSession()
+        if (!result.isValid) return
         viewModelScope.launch {
-            repository.recordCompletedTaskSession(
+            val recorded = repository.recordCompletedTaskSession(
                 taskId = result.taskId,
                 plannedDurationMinutes = result.plannedDurationMinutes,
                 actualDurationMinutes = result.actualDurationMinutes,
@@ -447,23 +544,27 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 pausedMinutes = result.pausedMinutes,
                 startTimestamp = result.startTimestamp,
                 endTimestamp = result.endTimestamp,
-                markTaskAsCompleted = true
+                markTaskAsCompleted = true,
+                submissionKey = result.submissionKey
             )
-            _userMessage.value = "Task '${result.taskTitle}' finished! Logged ${result.actualDurationMinutes}m focused study. 🌸"
+            if (recorded) {
+                _userMessage.value = "Task '${result.taskTitle}' finished! Logged ${result.actualDurationMinutes}m focused study. 🌸"
 
-            // Smart Account Reminder: Gently offer account creation to guest after completing study session
-            val profile = repository.getProfileOnce()
-            if (profile.isGuest && !profile.hasSeenAccountReminder) {
-                delay(1000)
-                _showAccountReminderDialog.value = true
+                // Smart Account Reminder: Gently offer account creation to guest after completing study session
+                val profile = repository.getProfileOnce()
+                if (profile.isGuest && !profile.hasSeenAccountReminder) {
+                    delay(1000)
+                    _showAccountReminderDialog.value = true
+                }
             }
         }
     }
 
     fun stopTaskClock() {
         val result = taskTimerManager.stopWithoutCompleting()
+        if (!result.isValid) return
         viewModelScope.launch {
-            repository.recordCompletedTaskSession(
+            val recorded = repository.recordCompletedTaskSession(
                 taskId = result.taskId,
                 plannedDurationMinutes = result.plannedDurationMinutes,
                 actualDurationMinutes = result.actualDurationMinutes,
@@ -471,13 +572,95 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 pausedMinutes = result.pausedMinutes,
                 startTimestamp = result.startTimestamp,
                 endTimestamp = result.endTimestamp,
-                markTaskAsCompleted = false
+                markTaskAsCompleted = false,
+                submissionKey = result.submissionKey
             )
-            _userMessage.value = "Session stopped. Logged ${result.actualDurationMinutes}m focused time."
+            if (recorded) {
+                _userMessage.value = "Session stopped. Logged ${result.actualDurationMinutes}m focused time."
+            }
         }
     }
 
     // --- Schedule Wizard ---
+    fun openMultiGoalWizard(targetDate: String = _selectedPlanDate.value) {
+        viewModelScope.launch {
+            val profile = repository.getProfileOnce()
+            val allActiveGoals = repository.getAllGoalsForCurrentOwnerOnce().filter { !it.isCompleted }
+            val matchingGoals = allActiveGoals.filter {
+                it.preferredDate == targetDate || it.preferredDate <= targetDate
+            }.ifEmpty { allActiveGoals }
+
+            _wizardState.value = ScheduleWizardData(
+                step = 1,
+                wizardMode = if (allActiveGoals.isNotEmpty()) "GOALS" else "MATERIAL",
+                selectedGoalIds = matchingGoals.map { it.id }.toSet(),
+                startDate = targetDate.ifBlank { todayDate },
+                targetEndDate = targetDate.ifBlank { todayDate },
+                dailyMinutesTarget = profile.dailyGoalMinutes,
+                sessionDuration = profile.preferredSessionDurationMinutes,
+                breakDuration = profile.preferredBreakDurationMinutes
+            )
+        }
+    }
+
+    fun openMaterialWizard(material: LearningMaterialEntity? = null) {
+        viewModelScope.launch {
+            val profile = repository.getProfileOnce()
+            val topics = if (material != null) {
+                StudyBloomDatabase.getInstance(getApplication()).topicDao().getTopicsForMaterialOnce(material.id)
+            } else {
+                emptyList()
+            }
+            _wizardState.value = ScheduleWizardData(
+                step = 1,
+                wizardMode = "MATERIAL",
+                subject = material?.title ?: "",
+                selectedMaterialId = material?.id,
+                selectedTopics = topics,
+                startDate = todayDate,
+                targetEndDate = getFutureDate(7),
+                dailyMinutesTarget = profile.dailyGoalMinutes,
+                sessionDuration = profile.preferredSessionDurationMinutes,
+                breakDuration = profile.preferredBreakDurationMinutes
+            )
+        }
+    }
+
+    fun setWizardMode(mode: String) {
+        viewModelScope.launch {
+            val current = _wizardState.value
+            val selectedIds = if (mode == "GOALS" && current.selectedGoalIds.isEmpty()) {
+                repository.getAllGoalsForCurrentOwnerOnce()
+                    .filter { !it.isCompleted }
+                    .map { it.id }
+                    .toSet()
+            } else {
+                current.selectedGoalIds
+            }
+            _wizardState.value = current.copy(
+                wizardMode = mode,
+                selectedGoalIds = selectedIds,
+                generatedPreview = emptyList(),
+                multiGoalResult = null,
+                errorMessage = null
+            )
+        }
+    }
+
+    fun toggleWizardGoalSelection(goalId: Long) {
+        val current = _wizardState.value
+        val updated = current.selectedGoalIds.toMutableSet()
+        if (!updated.add(goalId)) {
+            updated.remove(goalId)
+        }
+        _wizardState.value = current.copy(selectedGoalIds = updated, errorMessage = null)
+    }
+
+    fun selectAllWizardGoals(goals: List<StudyGoalEntity>) {
+        val activeIds = goals.filter { !it.isCompleted }.map { it.id }.toSet()
+        _wizardState.value = _wizardState.value.copy(selectedGoalIds = activeIds, errorMessage = null)
+    }
+
     fun updateWizardStep(step: Int) {
         _wizardState.value = _wizardState.value.copy(step = step)
     }
@@ -519,14 +702,60 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
             val slots = repository.getAllSlotsOnce()
             val state = _wizardState.value
 
+            if (state.wizardMode == "GOALS") {
+                val allActive = repository.getAllGoalsForCurrentOwnerOnce().filter { !it.isCompleted }
+                val selectedGoals = allActive.filter { it.id in state.selectedGoalIds }
+                if (selectedGoals.isNotEmpty()) {
+                    val effectiveStart = state.startDate.ifBlank { todayDate }
+                    val effectiveEnd = state.targetEndDate.ifBlank { effectiveStart }
+                        .let { if (it < effectiveStart) effectiveStart else it }
+                    val existingTasks = repository.getTasksBetweenDatesOnce(effectiveStart, effectiveEnd)
+
+                    val multiResult = repository.generateMultiGoalSchedule(
+                        MultiGoalScheduleRequest(
+                            goals = selectedGoals,
+                            existingTasks = existingTasks,
+                            startDate = effectiveStart,
+                            targetEndDate = effectiveEnd,
+                            dailyGoalMinutes = state.dailyMinutesTarget,
+                            sessionDurationMinutes = state.sessionDuration,
+                            breakDurationMinutes = state.breakDuration,
+                            availabilitySlots = slots
+                        )
+                    )
+                    if (multiResult.isSuccess) {
+                        val res = multiResult.getOrThrow()
+                        _wizardState.value = _wizardState.value.copy(
+                            isGenerating = false,
+                            generatedPreview = res.tasks,
+                            multiGoalResult = res,
+                            step = 5,
+                            errorMessage = res.warningMessage
+                        )
+                    } else {
+                        _wizardState.value = _wizardState.value.copy(
+                            isGenerating = false,
+                            errorMessage = multiResult.exceptionOrNull()?.message ?: "Failed to generate goal schedule"
+                        )
+                    }
+                    return@launch
+                } else if (state.subject.isBlank()) {
+                    _wizardState.value = _wizardState.value.copy(
+                        isGenerating = false,
+                        errorMessage = "Select at least one study goal or switch to Material / Subject mode."
+                    )
+                    return@launch
+                }
+            }
+
             val topics = if (state.selectedTopics.isNotEmpty()) {
                 state.selectedTopics
             } else {
-                // Generate default mock topic entities if custom subject
+                // Generate structured study modules when scheduling a custom subject
                 listOf(
-                    TopicEntity(materialId = 0, title = "1. Foundations of ${state.subject}", subtopicsRaw = "Key concepts, glossary", difficulty = "EASY", estimatedMinutes = 45, isPrerequisite = true, orderIndex = 1),
-                    TopicEntity(materialId = 0, title = "2. Core Methodologies in ${state.subject}", subtopicsRaw = "Practical workflows", difficulty = "MEDIUM", estimatedMinutes = 60, isPrerequisite = true, orderIndex = 2),
-                    TopicEntity(materialId = 0, title = "3. Hands-on Implementation Lab", subtopicsRaw = "Coding / exercises", difficulty = "HARD", estimatedMinutes = 90, isPrerequisite = false, orderIndex = 3),
+                    TopicEntity(materialId = 0, title = "1. Foundations of ${state.subject.ifBlank { "Study Topic" }}", subtopicsRaw = "Key concepts, glossary", difficulty = "EASY", estimatedMinutes = 45, isPrerequisite = true, orderIndex = 1),
+                    TopicEntity(materialId = 0, title = "2. Core Methodologies in ${state.subject.ifBlank { "Study Topic" }}", subtopicsRaw = "Practical workflows", difficulty = "MEDIUM", estimatedMinutes = 60, isPrerequisite = true, orderIndex = 2),
+                    TopicEntity(materialId = 0, title = "3. Hands-on Practice & Application", subtopicsRaw = "Exercises & implementation", difficulty = "HARD", estimatedMinutes = 90, isPrerequisite = false, orderIndex = 3),
                     TopicEntity(materialId = 0, title = "4. Review, Edge Cases & Synthesis", subtopicsRaw = "Spaced repetition", difficulty = "MEDIUM", estimatedMinutes = 45, isPrerequisite = false, orderIndex = 4)
                 )
             }
@@ -547,6 +776,7 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 _wizardState.value = _wizardState.value.copy(
                     isGenerating = false,
                     generatedPreview = result.getOrThrow(),
+                    multiGoalResult = null,
                     step = 5 // Preview step
                 )
             } else {
@@ -556,6 +786,14 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
                 )
             }
         }
+    }
+
+    fun redistributeOverflowAcrossDays() {
+        val current = _wizardState.value
+        val suggestedLast = current.multiGoalResult?.suggestedMultiDayDates?.lastOrNull()
+        val expandedEnd = suggestedLast ?: addDaysToDate(current.targetEndDate.ifBlank { todayDate }, 3)
+        _wizardState.value = current.copy(targetEndDate = expandedEnd)
+        generateSchedulePreview()
     }
 
     fun saveGeneratedSchedule() {
@@ -589,7 +827,7 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
             val materialsList = allMaterials.value
 
             val context = AssistantContext(
-                userName = profile.nickname,
+                userName = profile.nickname.ifBlank { "Learner" },
                 todayDate = todayDate,
                 pendingTasks = pending,
                 completedTasksToday = todayTasksList.filter { it.isCompleted },
@@ -668,11 +906,12 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun testReminderNotification() {
+        val nextTask = todayTasks.value.firstOrNull { !it.isCompleted && !it.isSkipped }
         NotificationHelper.showTaskReminder(
             getApplication(),
-            "Django Models & QuerySet Filtering",
-            "Django Development",
-            "19:00"
+            nextTask?.title ?: "Scheduled Study Session",
+            nextTask?.subject?.ifBlank { "StudyBloom" } ?: "StudyBloom",
+            nextTask?.startTime ?: "Now"
         )
         _userMessage.value = "Test notification sent! Check your notification shade. 🌿"
     }
@@ -707,6 +946,18 @@ class StudyBloomViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun getFutureDate(daysAhead: Int): String {
         val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, daysAhead)
+        return dateFormat.format(cal.time)
+    }
+
+    private fun addDaysToDate(baseDate: String, daysAhead: Int): String {
+        val cal = Calendar.getInstance()
+        try {
+            val parsed = dateFormat.parse(baseDate)
+            if (parsed != null) cal.time = parsed
+        } catch (_: Exception) {
+            cal.time = Date()
+        }
         cal.add(Calendar.DAY_OF_YEAR, daysAhead)
         return dateFormat.format(cal.time)
     }

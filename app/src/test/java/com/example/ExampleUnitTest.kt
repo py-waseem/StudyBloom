@@ -224,8 +224,9 @@ class ExampleUnitTest {
 
         assertTrue("Guest mode must mark onboarding completed", guestSession.hasCompletedOnboarding)
         assertTrue("Guest session must be marked isGuest", guestSession.isGuest)
-        assertEquals("Learner", guestSession.nickname)
-        assertEquals("Programming and software development", guestSession.purpose)
+        assertEquals("", guestSession.nickname)
+        assertEquals("", guestSession.purpose)
+        assertEquals(0, guestSession.currentStreakDays)
     }
 
     @Test
@@ -263,5 +264,17 @@ class ExampleUnitTest {
         assertTrue(completedTask.isCompleted)
         assertEquals(60, completedTask.actualDurationMinutes)
         assertEquals(3, guestProfile.currentStreakDays)
+    }
+
+    @Test
+    fun clean_initial_state_has_no_fabricated_metrics() {
+        val freshProfile = com.example.data.local.entity.UserProfileEntity()
+        assertEquals(0, freshProfile.currentStreakDays)
+        assertEquals(0, freshProfile.completedSessionsCount)
+        assertEquals("", freshProfile.lastActiveDate)
+        assertEquals("", freshProfile.name)
+        assertEquals("", freshProfile.nickname)
+        assertEquals("", freshProfile.purpose)
+        assertEquals("", freshProfile.accountEmail)
     }
 }

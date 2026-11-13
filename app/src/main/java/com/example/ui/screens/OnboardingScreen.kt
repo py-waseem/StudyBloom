@@ -83,7 +83,7 @@ fun OnboardingScreen(
     onOpenAuth: (isRegister: Boolean) -> Unit = {}
 ) {
     var step by remember { mutableStateOf(OnboardingStep.WELCOME) }
-    var name by remember { mutableStateOf(initialProfile.nickname.ifBlank { "Alex" }) }
+    var name by remember { mutableStateOf(initialProfile.nickname) }
     var selectedPurpose by remember { mutableStateOf("Programming and software development") }
     var preferredHours by remember { mutableStateOf("Evenings") }
     var wakeTime by remember { mutableStateOf(initialProfile.wakeTime) }

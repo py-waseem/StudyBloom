@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.data.local.entity.UserProfileEntity
+import com.example.icon.WeekdayIconManager
 import com.example.ui.StudyBloomApp
 import com.example.ui.screens.LoginScreen
 import com.example.ui.theme.StudyBloomTheme
@@ -40,6 +41,11 @@ class MainActivity : ComponentActivity() {
                 StudyBloomNavApp()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        WeekdayIconManager.syncLauncherIcon(this)
     }
 }
 

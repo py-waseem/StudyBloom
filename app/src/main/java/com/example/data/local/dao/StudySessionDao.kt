@@ -32,4 +32,10 @@ interface StudySessionDao {
 
     @Query("SELECT * FROM study_sessions")
     suspend fun getAllSessionsOnce(): List<StudySessionEntity>
+
+    @Query("SELECT COUNT(*) FROM study_sessions WHERE sessionSubmissionKey = :key")
+    suspend fun countBySubmissionKey(key: String): Int
+
+    @Query("SELECT COUNT(*) FROM study_sessions WHERE taskId = :taskId")
+    suspend fun getSessionsCountForTask(taskId: Long): Int
 }

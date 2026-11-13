@@ -1,12 +1,21 @@
 package com.example.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "study_sessions")
+@Entity(
+    tableName = "study_sessions",
+    indices = [
+        Index(value = ["goalId"]),
+        Index(value = ["sessionSubmissionKey"], unique = true)
+    ]
+)
 data class StudySessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val taskId: Long? = null,
+    val goalId: Long? = null,
+    val sessionSubmissionKey: String? = null,
     val taskTitle: String = "Focus Session",
     val subject: String = "General",
     val durationMinutes: Int, // Actual focused duration

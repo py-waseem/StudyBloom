@@ -63,4 +63,28 @@ interface StudyTaskDao {
 
     @Query("SELECT * FROM study_tasks")
     suspend fun getAllTasksOnce(): List<StudyTaskEntity>
+
+    @Query("SELECT * FROM study_tasks ORDER BY date ASC, startTime ASC")
+    fun getAllTasksFlow(): Flow<List<StudyTaskEntity>>
+
+    @Query("SELECT * FROM study_tasks WHERE goalId = :goalId ORDER BY date ASC, startTime ASC")
+    suspend fun getTasksForGoalOnce(goalId: Long): List<StudyTaskEntity>
+
+    @Query("UPDATE study_tasks SET goalId = NULL WHERE goalId = :goalId")
+    suspend fun unlinkTasksFromGoal(goalId: Long)
+
+    @Query("DELETE FROM study_tasks WHERE goalId = :goalId AND isCompleted = 0")
+    suspend fun deleteUncompletedTasksForGoal(goalId: Long)
+
+    @Query("UPDATE study_tasks SET date = :newDate WHERE goalId = :goalId AND isCompleted = 0")
+    suspend fun rescheduleUncompletedTasksForGoal(goalId: Long, newDate: String)
+
+    @Query(
+        "DELETE FROM study_tasks WHERE actualDurationMinutes = 0 AND (" +
+            "(title = 'Python Functions & Lambda Expressions' AND description = 'Review functional programming concepts, closures, and type hints') OR " +
+            "(title = 'Django Models & QuerySet Filtering' AND description = 'Practice complex lookups with Q objects and annotate() aggregations') OR " +
+            "(title = 'Quick Revision: REST API Status Codes' AND description = 'Review 200 vs 201, 400 vs 422, and idempotency')" +
+            ")"
+    )
+    suspend fun deleteDemoStarterTasks()
 }

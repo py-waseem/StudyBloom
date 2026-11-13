@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
@@ -61,11 +62,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.local.entity.StudyGoalEntity
 import com.example.data.local.entity.StudyTaskEntity
 import com.example.data.local.entity.UserProfileEntity
 import com.example.ui.components.BloomBadge
 import com.example.ui.components.BloomCard
 import com.example.ui.components.CategoryBadge
+import com.example.ui.components.DailyGoalCard
 import com.example.ui.components.PriorityBadge
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.LavenderLight
@@ -87,6 +90,8 @@ import java.util.Locale
 fun HomeScreen(
     userProfile: UserProfileEntity,
     todayTasks: List<StudyTaskEntity>,
+    todayGoals: List<StudyGoalEntity> = emptyList(),
+    allTasks: List<StudyTaskEntity> = emptyList(),
     networkState: NetworkState = NetworkState(),
     syncState: SyncState = SyncState(),
     onOpenConnectionDetails: () -> Unit = {},
@@ -100,7 +105,13 @@ fun HomeScreen(
     onOpenAssistant: () -> Unit,
     onOpenFocusTimer: () -> Unit,
     onExportPdf: () -> Unit,
-    onOpenAccountReminder: () -> Unit = {}
+    onOpenAccountReminder: () -> Unit = {},
+    onOpenAddGoal: () -> Unit = {},
+    onEditGoal: (StudyGoalEntity) -> Unit = {},
+    onToggleGoalComplete: (StudyGoalEntity) -> Unit = {},
+    onRescheduleGoal: (StudyGoalEntity) -> Unit = {},
+    onDeleteGoal: (StudyGoalEntity) -> Unit = {},
+    onScheduleGoalsWithAi: () -> Unit = onOpenWizard
 ) {
     val totalPlannedMinutes = todayTasks.sumOf { it.durationMinutes }
     val completedTasks = todayTasks.filter { it.isCompleted }
@@ -209,7 +220,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Hello, ${userProfile.nickname} 🌸",
+                            text = if (userProfile.nickname.isNotBlank()) "Hello, ${userProfile.nickname} 🌸" else "Welcome to StudyBloom 🌸",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
@@ -352,6 +363,15 @@ fun HomeScreen(
                 ) {
                     item {
                         ActionChip(
+                            icon = Icons.Default.Flag,
+                            label = "Add Goal",
+                            backgroundColor = LavenderLight,
+                            contentColor = LavenderPrimary,
+                            onClick = onOpenAddGoal
+                        )
+                    }
+                    item {
+                        ActionChip(
                             icon = Icons.Default.Timer,
                             label = "Focus Timer",
                             backgroundColor = LavenderLight,
@@ -408,6 +428,55 @@ fun HomeScreen(
                             fontWeight = FontWeight.Medium
                         )
                     }
+                }
+            }
+
+            // Today's Daily Study Goals Section (if any exist)
+            if (todayGoals.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "Today's Study Goals",
+                        subtitle = "${todayGoals.size}"
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (todayGoals.any { !it.isCompleted }) {
+                                Text(
+                                    text = "AI Schedule All",
+                                    color = LavenderPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable { onScheduleGoalsWithAi() }
+                                        .padding(4.dp)
+                                )
+                            }
+                            Text(
+                                text = "+ Add",
+                                color = MintGreen,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable { onOpenAddGoal() }
+                                    .padding(4.dp)
+                            )
+                        }
+                    }
+                }
+
+                items(todayGoals, key = { "home_goal_${it.id}" }) { goal ->
+                    val linkedTasks = remember(allTasks, todayTasks, goal.id) {
+                        (allTasks.ifEmpty { todayTasks }).filter { it.goalId == goal.id }
+                    }
+                    DailyGoalCard(
+                        goal = goal,
+                        linkedTasks = linkedTasks,
+                        onToggleComplete = { onToggleGoalComplete(goal) },
+                        onEdit = { onEditGoal(goal) },
+                        onReschedule = { onRescheduleGoal(goal) },
+                        onDelete = { onDeleteGoal(goal) }
+                    )
                 }
             }
 
@@ -707,13 +776,13 @@ fun EmptyDayPlaceholder(onOpenWizard: () -> Unit, onOpenAddTask: () -> Unit) {
             Text(text = "🌱", fontSize = 40.sp)
             Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "No study sessions scheduled for today",
+                text = "No tasks yet. Create your first task.",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Create a balanced study plan using StudyBloom's AI Scheduler, or add your tasks manually.",
+                text = "Your study schedule will appear here. Generate a plan or add a custom task.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp)

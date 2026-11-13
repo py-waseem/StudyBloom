@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.CloudDone
@@ -141,12 +143,12 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = nickname,
+                        text = nickname.ifBlank { if (userProfile.isGuest) "Guest User" else "StudyBloom User" },
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = purpose,
+                        text = purpose.ifBlank { "Set your study focus below" },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -471,27 +473,49 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Text(text = "Daily Study Target: $dailyGoalHours hours", fontWeight = FontWeight.Medium)
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Daily Study Target",
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "$dailyGoalHours hours",
+                                fontWeight = FontWeight.Bold,
+                                color = LavenderPrimary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             listOf(2, 3, 4, 5).forEach { h ->
                                 val isSel = dailyGoalHours == h
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .weight(1f)
+                                        .heightIn(min = 48.dp)
+                                        .clip(RoundedCornerShape(10.dp))
                                         .background(if (isSel) LavenderPrimary else LavenderLight)
                                         .clickable { dailyGoalHours = h }
-                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        .padding(vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "${h}h",
                                         color = if (isSel) Color.White else LavenderPrimary,
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
+                                        fontSize = 13.sp
                                     )
                                 }
                             }
@@ -575,9 +599,14 @@ fun ProfileScreen(
         }
 
         item {
-            BloomCard(backgroundColor = MaterialTheme.colorScheme.surface) {
+            BloomCard(
+                modifier = Modifier.fillMaxWidth(),
+                backgroundColor = MaterialTheme.colorScheme.surface
+            ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Row(
@@ -588,35 +617,65 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = "Session Reminders", fontWeight = FontWeight.SemiBold)
-                            Text(text = "Alerts before scheduled study and coding blocks", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = "Alerts before scheduled study and coding blocks",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Switch(
                             checked = reminderEnabled,
                             onCheckedChange = { reminderEnabled = it },
-                            colors = SwitchDefaults.colors(checkedThumbColor = LavenderPrimary, checkedTrackColor = LavenderLight)
+                            colors = SwitchDefaults.colors(checkedThumbColor = LavenderPrimary, checkedTrackColor = LavenderLight),
+                            modifier = Modifier.testTag("profile_session_reminders_switch")
                         )
                     }
 
                     if (reminderEnabled) {
-                        Row(
+                        Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text(text = "Reminder Interval: $reminderBefore min before", fontSize = 12.sp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Reminder Interval",
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "$reminderBefore min before",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = LavenderPrimary
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 listOf(5, 10, 15, 30).forEach { m ->
                                     val isSel = reminderBefore == m
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
+                                            .weight(1f)
+                                            .heightIn(min = 48.dp)
+                                            .clip(RoundedCornerShape(10.dp))
                                             .background(if (isSel) LavenderPrimary else LavenderLight)
                                             .clickable { reminderBefore = m }
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                            .padding(vertical = 10.dp)
+                                            .testTag("profile_reminder_interval_${m}m"),
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = "${m}m",
-                                            fontSize = 11.sp,
+                                            fontSize = 13.sp,
                                             color = if (isSel) Color.White else LavenderPrimary,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -634,11 +693,18 @@ fun ProfileScreen(
                                 onTestNotification()
                             }
                         },
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
                             .testTag("profile_test_notification_button")
                     ) {
-                        Text(text = "Send Test Reminder Notification 🌿", color = LavenderPrimary, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Send Test Reminder Notification 🌿",
+                            color = LavenderPrimary,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }

@@ -73,8 +73,10 @@ class NetworkConnectivityMonitor(context: Context) {
         }
     }
 
-    fun refresh() {
-        updateState()
+    fun refresh(): NetworkState {
+        val current = getCurrentNetworkState()
+        _networkState.value = current
+        return current
     }
 
     private fun updateState() {

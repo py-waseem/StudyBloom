@@ -82,7 +82,6 @@ fun MaterialsScreen(
 ) {
     val context = LocalContext.current
     var selectedMaterialForDetail by remember { mutableStateOf<LearningMaterialEntity?>(null) }
-    var showQuickSampleDialog by remember { mutableStateOf(false) }
 
     // Native Storage Access Framework file picker
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -156,7 +155,7 @@ fun MaterialsScreen(
             }
         }
 
-        // Quick Sample Material Loader Card
+        // AI Material Analyzer Banner
         item {
             BloomCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -184,16 +183,10 @@ fun MaterialsScreen(
                             color = LavenderPrimary
                         )
                         Text(
-                            text = "Extract chapters, topics, difficulty & prerequisites automatically.",
+                            text = "Upload your own PDF, DOCX, or TXT files to extract chapters, topics, difficulty & prerequisites automatically.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
-                    TextButton(
-                        onClick = { showQuickSampleDialog = true },
-                        modifier = Modifier.testTag("materials_try_sample_button")
-                    ) {
-                        Text(text = "+ Sample", fontWeight = FontWeight.Bold, color = LavenderPrimary)
                     }
                 }
             }
@@ -220,20 +213,31 @@ fun MaterialsScreen(
                     ) {
                         Text(text = "📚", fontSize = 36.sp)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "No study materials uploaded yet", fontWeight = FontWeight.Bold)
+                        Text(text = "No study materials uploaded yet.", fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Upload a PDF, DOCX, or TXT file, or choose from popular learning samples to generate an intelligent schedule.",
+                            text = "Upload a PDF, DOCX, or TXT study file from your device to analyze chapters and build your study schedule.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
                         Spacer(modifier = Modifier.height(14.dp))
                         Button(
-                            onClick = { showQuickSampleDialog = true },
+                            onClick = {
+                                filePickerLauncher.launch(
+                                    arrayOf(
+                                        "application/pdf",
+                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        "text/plain"
+                                    )
+                                )
+                            },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = LavenderPrimary)
                         ) {
-                            Text(text = "Add Learning Sample")
+                            Icon(imageVector = Icons.Default.UploadFile, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Upload Document")
                         }
                     }
                 }
@@ -273,57 +277,6 @@ fun MaterialsScreen(
             onGenerateSchedule = {
                 selectedMaterialForDetail = null
                 onGenerateScheduleFromMaterial(mat)
-            }
-        )
-    }
-
-    // Quick Sample Materials Dialog
-    if (showQuickSampleDialog) {
-        AlertDialog(
-            onDismissRequest = { showQuickSampleDialog = false },
-            title = { Text(text = "Choose a Learning Material Sample", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Select a textbook or curriculum sample to test AI chapter analysis and automatic schedule generation:",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    SampleOptionCard(
-                        title = "Python & Data Structures Mastery",
-                        type = "PDF",
-                        size = "3.8 MB",
-                        onClick = {
-                            showQuickSampleDialog = false
-                            onUploadMaterial("Python & Data Structures Mastery.pdf", "PDF", "", "3.8 MB", "Arrays, Linked Lists, Stacks, Queues, Binary Search Trees, Sorting Algorithms, Big-O Complexity")
-                        }
-                    )
-
-                    SampleOptionCard(
-                        title = "Computer Architecture & Operating Systems",
-                        type = "PDF",
-                        size = "5.1 MB",
-                        onClick = {
-                            showQuickSampleDialog = false
-                            onUploadMaterial("Computer Architecture & Operating Systems.pdf", "PDF", "", "5.1 MB", "Processes, Threads, CPU Scheduling, Virtual Memory, Paging, Deadlocks, File Systems")
-                        }
-                    )
-
-                    SampleOptionCard(
-                        title = "Full-Stack React & Node.js Web Dev",
-                        type = "PDF",
-                        size = "2.9 MB",
-                        onClick = {
-                            showQuickSampleDialog = false
-                            onUploadMaterial("Full-Stack React & Node.js Web Dev.pdf", "PDF", "", "2.9 MB", "Components, Props, State, Hooks, Context API, Express.js REST APIs, MongoDB Mongoose")
-                        }
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showQuickSampleDialog = false }) {
-                    Text("Cancel")
-                }
             }
         )
     }
@@ -584,33 +537,5 @@ fun MaterialTopicsDialog(
                 }
             }
         )
-    }
-}
-
-@Composable
-fun SampleOptionCard(
-    title: String,
-    type: String,
-    size: String,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(imageVector = Icons.Default.MenuBook, contentDescription = null, tint = LavenderPrimary, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(10.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                Text(text = "$type • $size", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = LavenderPrimary)
-        }
     }
 }

@@ -81,10 +81,6 @@ fun ProgressScreen(
             val subj = s.subject.ifBlank { "General" }
             map[subj] = (map[subj] ?: 0) + s.durationMinutes
         }
-        if (map.isEmpty()) {
-            map["Python & Django"] = 120
-            map["Data Structures"] = 60
-        }
         map.toList().sortedByDescending { it.second }
     }
 
@@ -92,12 +88,12 @@ fun ProgressScreen(
     val codingMinutes = remember(sessions) {
         sessions.filter {
             val s = it.subject.lowercase()
-            s.contains("python") || s.contains("django") || s.contains("code") || s.contains("algo") || s.contains("react")
-        }.sumOf { it.durationMinutes }.coerceAtLeast(60)
+            s.contains("python") || s.contains("django") || s.contains("code") || s.contains("algo") || s.contains("react") || s.contains("program")
+        }.sumOf { it.durationMinutes }
     }
-    val academicMinutes = (weeklyMinutes - codingMinutes).coerceAtLeast(30)
+    val academicMinutes = (weeklyMinutes - codingMinutes).coerceAtLeast(0)
     val totalCategory = codingMinutes + academicMinutes
-    val codingPercent = (codingMinutes.toFloat() / totalCategory.toFloat()).coerceIn(0f, 1f)
+    val codingPercent = if (totalCategory > 0) (codingMinutes.toFloat() / totalCategory.toFloat()).coerceIn(0f, 1f) else 0f
 
     LazyColumn(
         modifier = Modifier
@@ -159,7 +155,7 @@ fun ProgressScreen(
                     modifier = Modifier.weight(1f),
                     title = "Sessions",
                     value = "${sessions.size}",
-                    subtitle = "100% focused",
+                    subtitle = if (sessions.isEmpty()) "none yet" else "logged",
                     accentColor = MintGreen,
                     bgColor = MintGreenLight
                 )
@@ -236,23 +232,31 @@ fun ProgressScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Coding Practice: ${(codingPercent * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LavenderPrimary)
-                        Text(text = "Theory & Academic: ${((1f - codingPercent) * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PastelBlue)
+                    if (totalCategory > 0) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Coding Practice: ${(codingPercent * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = LavenderPrimary)
+                            Text(text = "Theory & Academic: ${((1f - codingPercent) * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PastelBlue)
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = { codingPercent },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(5.dp)),
+                            color = LavenderPrimary,
+                            trackColor = PastelBlueLight
+                        )
+                    } else {
+                        Text(
+                            text = "No focus distribution yet. Complete a study session to see your balance across subjects.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    LinearProgressIndicator(
-                        progress = { codingPercent },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp)),
-                        color = LavenderPrimary,
-                        trackColor = PastelBlueLight
-                    )
                 }
             }
         }
@@ -264,30 +268,46 @@ fun ProgressScreen(
 
         item {
             BloomCard(backgroundColor = MaterialTheme.colorScheme.surface) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    subjectBreakdown.take(4).forEach { (subject, mins) ->
-                        val pct = if (weeklyMinutes > 0) (mins.toFloat() / weeklyMinutes.toFloat()).coerceIn(0.1f, 1f) else 0.5f
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(text = subject, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                                Text(text = "${mins / 60}h ${mins % 60}m", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (subjectBreakdown.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No subject statistics yet. Complete your first study session to see time tracked per subject.",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    val maxSubjectMinutes = subjectBreakdown.maxOfOrNull { it.second }?.coerceAtLeast(1) ?: 1
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        subjectBreakdown.take(4).forEach { (subject, mins) ->
+                            val pct = (mins.toFloat() / maxSubjectMinutes.toFloat()).coerceIn(0.05f, 1f)
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(text = subject, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    Text(text = "${mins / 60}h ${mins % 60}m", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { pct },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(3.dp)),
+                                    color = LavenderPrimary,
+                                    trackColor = LavenderLight
+                                )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            LinearProgressIndicator(
-                                progress = { pct },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp)),
-                                color = LavenderPrimary,
-                                trackColor = LavenderLight
-                            )
                         }
                     }
                 }
@@ -398,7 +418,11 @@ fun ProgressScreen(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "You studied for ${weeklyHours} hours this week, logged ${sessions.size} focused sessions, and spent ${codingMinutes / 60}h practicing coding. Consistent effort grows into mastery!",
+                            text = if (sessions.isEmpty()) {
+                                "Start your first study session or task timer to track genuine weekly focus hours and learning consistency."
+                            } else {
+                                "You studied for ${weeklyHours} hours this week, logged ${sessions.size} focused sessions, and spent ${codingMinutes / 60}h practicing coding. Consistent effort grows into mastery!"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )

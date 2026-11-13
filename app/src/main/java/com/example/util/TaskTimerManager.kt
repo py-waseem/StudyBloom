@@ -43,7 +43,9 @@ data class TimerFinishResult(
     val overtimeMinutes: Int,
     val pausedMinutes: Int,
     val startTimestamp: Long,
-    val endTimestamp: Long
+    val endTimestamp: Long,
+    val isValid: Boolean = true,
+    val submissionKey: String = "TASK_CLOCK:${taskId}:${startTimestamp}"
 )
 
 class TaskTimerManager private constructor(context: Context) {
@@ -146,6 +148,24 @@ class TaskTimerManager private constructor(context: Context) {
     fun finishSession(): TimerFinishResult {
         val now = System.currentTimeMillis()
         val snapshot = _timerState.value
+        if (!snapshot.isActive || snapshot.taskId <= 0L || snapshot.actualStartTimestamp <= 0L) {
+            clearStorage()
+            NotificationHelper.cancelActiveTaskNotification(appContext)
+            return TimerFinishResult(
+                taskId = 0L,
+                taskTitle = "",
+                taskSubject = "",
+                plannedDurationMinutes = 0,
+                actualDurationMinutes = 0,
+                overtimeMinutes = 0,
+                pausedMinutes = 0,
+                startTimestamp = 0L,
+                endTimestamp = now,
+                isValid = false,
+                submissionKey = ""
+            )
+        }
+
         val actualFocusedMillis = calculateCurrentActiveMillis()
         val actualMinutes = (actualFocusedMillis / 60000L).toInt()
         val plannedMinutes = snapshot.scheduledDurationMinutes
@@ -161,7 +181,9 @@ class TaskTimerManager private constructor(context: Context) {
             overtimeMinutes = overtimeMinutes,
             pausedMinutes = pausedMinutes,
             startTimestamp = snapshot.actualStartTimestamp,
-            endTimestamp = now
+            endTimestamp = now,
+            isValid = true,
+            submissionKey = "TASK_CLOCK:${snapshot.taskId}:${snapshot.actualStartTimestamp}"
         )
 
         clearStorage()

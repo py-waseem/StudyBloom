@@ -1,9 +1,13 @@
 package com.example.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "study_tasks")
+@Entity(
+    tableName = "study_tasks",
+    indices = [Index(value = ["goalId"])]
+)
 data class StudyTaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
@@ -22,6 +26,7 @@ data class StudyTaskEntity(
     val notes: String = "",
     val materialId: Long? = null,
     val topicId: Long? = null,
+    val goalId: Long? = null,
     val taskType: String = "STUDY", // "STUDY", "CODING", "REVISION", "BREAK", "EXERCISE"
     val learningObjective: String = "",
     val estimatedDifficulty: String = "MEDIUM", // "EASY", "MEDIUM", "HARD"
